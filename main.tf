@@ -70,7 +70,7 @@ locals {
       description         = v.description
       name                = v.name
       organization        = v.organization
-      policy_bucket       = [ for i in v.policy_bucket : i if i != null ]
+      policy_bucket       = [for i in v.policy_bucket : i if i != null]
       serial_number       = v.serial_number
       tags                = v.tags
       target_platform     = v.target_platform
@@ -385,11 +385,11 @@ locals {
   ]
   server = [
     for v in local.server_loop : {
-      action       = v.action
-      description  = v.description
-      name         = v.name
-      organization = v.organization
-      policy_bucket = [ for i in v.policy_bucket : i if i != null ]
+      action                      = v.action
+      description                 = v.description
+      name                        = v.name
+      organization                = v.organization
+      policy_bucket               = [for i in v.policy_bucket : i if i != null]
       resource_pool               = v.resource_pool
       serial_number               = v.serial_number
       static_uuid_address         = v.static_uuid_address
@@ -410,7 +410,7 @@ locals {
 
 module "chassis" {
   source  = "terraform-cisco-modules/profiles-chassis/intersight"
-  version = ">= 1.0.1"
+  version = ">= 1.0.3"
 
   for_each = { for v in local.chassis : v.name => v if lookup(
     local.modules.profiles, "chassis", true)
@@ -421,7 +421,7 @@ module "chassis" {
   name                = each.value.name
   organization        = each.value.organization
   policies            = local.policies
-  policy_bucket       = [ for v in each.value.policy_bucket : v if v != null ]
+  policy_bucket       = [for v in each.value.policy_bucket : v if v != null]
   serial_number       = each.value.serial_number
   tags                = each.value.tags
   target_platform     = each.value.target_platform
@@ -437,7 +437,7 @@ module "chassis" {
 
 module "server" {
   source  = "terraform-cisco-modules/profiles-server/intersight"
-  version = ">= 1.0.1"
+  version = ">= 1.0.3"
 
   for_each = { for v in local.server : v.name => v if lookup(
     local.modules.profiles, "server", true)
