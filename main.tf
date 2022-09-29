@@ -8,7 +8,7 @@ locals {
   pools          = var.pools
   profiles       = lookup(local.intersight, "profiles", {})
   templates      = lookup(local.intersight, "templates", {})
-  chassis_loop_1 = flatten([
+  chassis_loop = flatten([
     for v in lookup(local.profiles, "chassis", []) : [
       for i in range(length(v.names)) : {
         action      = lookup(v, "action", local.defaults.intersight.profiles.chassis.action)
@@ -50,27 +50,22 @@ locals {
       }
     ]
   ])
-  chassis_loop_2 = [
-    for v in local.chassis_loop_1 : {
-      action              = v.action
-      description         = v.description
-      name                = v.name
-      organization        = v.organization
-      policy_bucket       = flatten([v.imc_access_policy, v.power_policy, v.snmp_policy, v.thermal_policy])
-      serial_number       = v.serial_number
-      tags                = v.tags
-      target_platform     = v.target_platform
-      wait_for_completion = v.wait_for_completion
-    }
-  ]
-
   chassis = [
-    for v in local.chassis_loop_2 : {
-      action              = v.action
-      description         = v.description
-      name                = v.name
-      organization        = v.organization
-      policy_bucket       = [for i in v.policy_bucket : i if i != null]
+    for v in local.chassis_loop : {
+      action       = v.action
+      description  = v.description
+      name         = v.name
+      organization = v.organization
+      policy_bucket = [
+        for i in flatten(
+          [
+            v.imc_access_policy,
+            v.power_policy,
+            v.snmp_policy,
+            v.thermal_policy
+          ]
+        ) : i if i != null
+      ]
       serial_number       = v.serial_number
       tags                = v.tags
       target_platform     = v.target_platform
@@ -342,54 +337,41 @@ locals {
       wait_for_completion = v.wait_for_completion
     }
   ]
-  server_loop = [
+  server = [
     for v in local.server_policies : {
       action       = v.action
       description  = v.description
       name         = v.name
       organization = v.organization
-      policy_bucket = toset(flatten([
-        v.adapter_configuration_policy,
-        v.bios_policy,
-        v.certificate_management_policy,
-        v.device_connector_policy,
-        v.imc_access_policy,
-        v.ipmi_over_lan_policy,
-        v.lan_connectivity_policy,
-        v.ldap_policy,
-        v.local_user_policy,
-        v.network_connectivity_policy,
-        v.ntp_policy,
-        v.persistent_memory_policy,
-        v.power_policy,
-        v.san_connectivity_policy,
-        v.sd_card_policy,
-        v.serial_over_lan_policy,
-        v.smtp_policy,
-        v.snmp_policy,
-        v.ssh_policy,
-        v.storage_policy,
-        v.syslog_policy,
-        v.virtual_kvm_policy,
-        v.virtual_media_policy
-      ]))
-      resource_pool               = v.resource_pool
-      serial_number               = v.serial_number
-      static_uuid_address         = v.static_uuid_address
-      tags                        = v.tags
-      target_platform             = v.target_platform
-      ucs_server_profile_template = v.ucs_server_profile_template
-      uuid_pool                   = v.uuid_pool
-      wait_for_completion         = v.wait_for_completion
-    }
-  ]
-  server = [
-    for v in local.server_loop : {
-      action                      = v.action
-      description                 = v.description
-      name                        = v.name
-      organization                = v.organization
-      policy_bucket               = [for i in v.policy_bucket : i if i != null]
+      policy_bucket = [
+        for i in flatten(
+          [
+            v.adapter_configuration_policy,
+            v.bios_policy,
+            v.certificate_management_policy,
+            v.device_connector_policy,
+            v.imc_access_policy,
+            v.ipmi_over_lan_policy,
+            v.lan_connectivity_policy,
+            v.ldap_policy,
+            v.local_user_policy,
+            v.network_connectivity_policy,
+            v.ntp_policy,
+            v.persistent_memory_policy,
+            v.power_policy,
+            v.san_connectivity_policy,
+            v.sd_card_policy,
+            v.serial_over_lan_policy,
+            v.smtp_policy,
+            v.snmp_policy,
+            v.ssh_policy,
+            v.storage_policy,
+            v.syslog_policy,
+            v.virtual_kvm_policy,
+            v.virtual_media_policy
+          ]
+        ) : i if i != null
+      ]
       resource_pool               = v.resource_pool
       serial_number               = v.serial_number
       static_uuid_address         = v.static_uuid_address
@@ -437,7 +419,7 @@ module "chassis" {
 
 module "server" {
   source  = "terraform-cisco-modules/profiles-server/intersight"
-  version = ">= 1.0.3"
+  version = ">= 1.0.4"
 
   for_each = { for v in local.server : v.name => v if lookup(
     local.modules.profiles, "server", true)
