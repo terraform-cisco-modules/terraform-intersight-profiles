@@ -1,8 +1,7 @@
 locals {
   defaults       = lookup(var.model, "defaults", {})
-  modules        = lookup(var.model, "modules", {})
   intersight     = lookup(var.model, "intersight", {})
-  orgs           = var.pools.orgs
+  orgs           = local.defaults.intersight.moids == true ? var.pools.orgs : {}
   policies       = var.policies
   policies_model = lookup(local.intersight, "policies", {})
   pools          = var.pools
@@ -10,7 +9,7 @@ locals {
   templates      = lookup(local.intersight, "templates", {})
   chassis_loop = flatten([
     for v in lookup(local.profiles, "chassis", []) : [
-      for i in range(length(v.names)) : {
+      for i in range(length(v.names_serials)) : {
         action      = lookup(v, "action", local.defaults.intersight.profiles.chassis.action)
         description = lookup(v, "description", "")
         imc_access_policy = length(compact([lookup(v, "imc_access_policy", "")])) > 0 ? {
@@ -18,18 +17,19 @@ locals {
           object_type = "access.Policy"
           policy      = "imc_access"
         } : null
-        name = "${element(v.names, i)}${local.defaults.intersight.profiles.chassis.name_suffix}"
-        organization = local.orgs[lookup(
-          v, "organization", local.defaults.intersight.organization
-        )]
+        moids = lookup(v, "moids", local.defaults.intersight.moids)
+        name  = "${element(element(v.names_serials, i), 0)}${local.defaults.intersight.profiles.chassis.name_suffix}"
+        organization = lookup(v, "moids", local.defaults.intersight.moids) == true ? local.orgs[
+          lookup(v, "organization", local.defaults.intersight.organization
+          )] : lookup(v, "organization", local.defaults.intersight.organization
+        )
         power_policy = length(compact([lookup(v, "power_policy", "")])) > 0 ? {
           name        = v.power_policy
           object_type = "power.Policy"
           policy      = "power"
         } : null
-        serial_number = length(lookup(v, "serial_numbers", [])) == length(
-          v.names) ? element(v.serial_numbers, i
-        ) : ""
+        serial_number = length(element(v.names_serials, i)
+        ) == 2 ? element(element(v.names_serials, i), 1) : ""
         snmp_policy = length(compact([lookup(v, "snmp_policy", "")])) > 0 ? {
           name        = v.snmp_policy
           object_type = "snmp.Policy"
@@ -105,7 +105,7 @@ locals {
 
   server_merge_template = flatten([
     for v in lookup(local.profiles, "server", []) : [
-      for i in range(length(v.names)) : {
+      for i in range(length(v.names_serials)) : {
         action = lookup(v, "action", local.defaults.intersight.profiles.server.action)
         adapter_configuration_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "adapter_configuration_policy", local.stemplates[v.ucs_server_profile_template
@@ -138,14 +138,18 @@ locals {
         local_user_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "local_user_policy", local.stemplates[v.ucs_server_profile_template
         ].local_user_policy) : lookup(v, "local_user_policy", "")
-        name = "${element(v.names, i)}${local.defaults.intersight.profiles.server.name_suffix}"
+        name = "${element(element(v.names_serials, i), 0)}${local.defaults.intersight.profiles.server.name_suffix}"
         network_connectivity_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "network_connectivity_policy", local.stemplates[v.ucs_server_profile_template
         ].network_connectivity_policy) : lookup(v, "network_connectivity_policy", "")
         ntp_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "ntp_policy", local.stemplates[v.ucs_server_profile_template
         ].ntp_policy) : lookup(v, "ntp_policy", "")
-        organization = local.orgs[lookup(v, "organization", local.defaults.intersight.organization)]
+        organization = lookup(v, "moids", local.defaults.intersight.moids) == true ? local.orgs[lookup(
+          v, "organization", local.defaults.intersight.organization
+          )] : lookup(
+          v, "organization", local.defaults.intersight.organization
+        )
         persistent_memory_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "persistent_memory_policy", local.stemplates[v.ucs_server_profile_template
         ].persistent_memory_policy) : lookup(v, "persistent_memory_policy", "")
@@ -159,8 +163,8 @@ locals {
         sd_card_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "sd_card_policy", local.stemplates[v.ucs_server_profile_template
         ].sd_card_policy) : lookup(v, "sd_card_policy", "")
-        serial_number = length(lookup(v, "serial_numbers", [])
-        ) == length(v.names) ? element(v.serial_numbers, i) : ""
+        serial_number = length(element(v.names_serials, i)
+        ) == 2 ? element(element(v.names_serials, i), 1) : ""
         serial_over_lan_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "serial_over_lan_policy", local.stemplates[v.ucs_server_profile_template
         ].serial_over_lan_policy) : lookup(v, "serial_over_lan_policy", "")
@@ -392,18 +396,16 @@ locals {
 
 module "chassis" {
   source  = "terraform-cisco-modules/profiles-chassis/intersight"
-  version = ">= 1.0.3"
+  version = ">= 1.0.4"
 
-  for_each = { for v in local.chassis : v.name => v if lookup(
-    local.modules.profiles, "chassis", true)
-  }
+  for_each            = { for v in local.chassis : v.name => v }
   action              = each.value.action
   description         = each.value.description
-  moids               = true
+  moids               = each.value.moid
   name                = each.value.name
   organization        = each.value.organization
   policies            = local.policies
-  policy_bucket       = [for v in each.value.policy_bucket : v if v != null]
+  policy_bucket       = each.value.policy_bucket
   serial_number       = each.value.serial_number
   tags                = each.value.tags
   target_platform     = each.value.target_platform
@@ -419,14 +421,12 @@ module "chassis" {
 
 module "server" {
   source  = "terraform-cisco-modules/profiles-server/intersight"
-  version = ">= 1.0.4"
+  version = ">= 1.0.5"
 
-  for_each = { for v in local.server : v.name => v if lookup(
-    local.modules.profiles, "server", true)
-  }
+  for_each            = { for v in local.server : v.name => v }
   action              = each.value.action
   description         = each.value.description
-  moids               = true
+  moids               = lookup(each.value, "moids", local.defaults.intersight.moids)
   name                = each.value.name
   organization        = each.value.organization
   policies            = local.policies
