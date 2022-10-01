@@ -54,6 +54,7 @@ locals {
     for v in local.chassis_loop : {
       action       = v.action
       description  = v.description
+      moids        = v.moids
       name         = v.name
       organization = v.organization
       policy_bucket = [
@@ -138,7 +139,8 @@ locals {
         local_user_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "local_user_policy", local.stemplates[v.ucs_server_profile_template
         ].local_user_policy) : lookup(v, "local_user_policy", "")
-        name = "${element(element(v.names_serials, i), 0)}${local.defaults.intersight.profiles.server.name_suffix}"
+        moids = lookup(v, "moids", local.defaults.intersight.moids)
+        name  = "${element(element(v.names_serials, i), 0)}${local.defaults.intersight.profiles.server.name_suffix}"
         network_connectivity_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "network_connectivity_policy", local.stemplates[v.ucs_server_profile_template
         ].network_connectivity_policy) : lookup(v, "network_connectivity_policy", "")
@@ -259,7 +261,8 @@ locals {
         object_type = "iam.EndPointUserPolicy"
         policy      = "local_user"
       } : null
-      name = v.name
+      moids = v.moids
+      name  = v.name
       network_connectivity_policy = length(compact([v.network_connectivity_policy])) > 0 ? {
         name        = v.network_connectivity_policy
         object_type = "networkconfig.Policy"
@@ -345,6 +348,7 @@ locals {
     for v in local.server_policies : {
       action       = v.action
       description  = v.description
+      moids        = v.moids
       name         = v.name
       organization = v.organization
       policy_bucket = [
@@ -401,7 +405,7 @@ module "chassis" {
   for_each            = { for v in local.chassis : v.name => v }
   action              = each.value.action
   description         = each.value.description
-  moids               = each.value.moid
+  moids               = each.value.moids
   name                = each.value.name
   organization        = each.value.organization
   policies            = local.policies
@@ -426,7 +430,7 @@ module "server" {
   for_each            = { for v in local.server : v.name => v }
   action              = each.value.action
   description         = each.value.description
-  moids               = lookup(each.value, "moids", local.defaults.intersight.moids)
+  moids               = each.value.moids
   name                = each.value.name
   organization        = each.value.organization
   policies            = local.policies
