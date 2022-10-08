@@ -75,7 +75,7 @@ locals {
   ]
 
   stemplates = {
-    for v in local.templates.server : v.name => {
+    for v in lookup(local.templates, "server", []) : v.name => {
       adapter_configuration_policy  = lookup(v, "adapter_configuration_policy", "")
       bios_policy                   = lookup(v, "bios_policy", "")
       boot_order_policy             = lookup(v, "boot_order_policy", "")
