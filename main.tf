@@ -425,7 +425,7 @@ module "chassis" {
 
 module "server" {
   source  = "terraform-cisco-modules/profiles-server/intersight"
-  version = ">= 1.0.7"
+  version = ">= 1.0.8"
 
   for_each            = { for v in local.server : v.name => v }
   action              = each.value.action
