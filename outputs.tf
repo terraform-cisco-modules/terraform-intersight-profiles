@@ -5,9 +5,9 @@
 
 output "chassis" {
   description = "Moid's of the UCS Chassis Profiles."
-  value = length(lookup(local.profiles, "chassis", [])) > 0 ? { for v in sort(
-    keys(module.chassis)
-  ) : v => module.chassis[v].moid } : {}
+  value = length(local.chassis) > 0 ? { for v in sort(
+    keys(intersight_chassis_profile.chassis)
+  ) : v => intersight_chassis_profile.chassis[v].moid } : {}
 }
 
 
@@ -19,6 +19,6 @@ output "chassis" {
 output "server" {
   description = "Moid's of the UCS Server Profiles."
   value = length(lookup(local.profiles, "server", [])) > 0 ? { for v in sort(
-    keys(module.server)
-  ) : v => module.server[v].moid } : {}
+    keys(intersight_server_profile.server)
+  ) : v => intersight_server_profile.server[v].moid } : {}
 }

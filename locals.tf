@@ -3,10 +3,11 @@ locals {
   intersight = lookup(var.model, "intersight", {})
   moids      = local.defaults.intersight.moids
   orgs       = local.moids == true ? var.pools.orgs : {}
-  organizations = local.moids == false ? distinct(compact(concat(
-    [for i in lookup(local.profiles, "server", []) : lookup(i, "organization", local.defaults.intersight.organization)],
-    [for i in lookup(local.templates, "server", []) : lookup(i, "organization", local.defaults.intersight.organization)]
-  ))) : []
+  organizations = distinct(compact(concat(
+    [for i in lookup(local.profiles, "chassis", []) : lookup(i, "organization", var.organization)],
+    [for i in lookup(local.profiles, "server", []) : lookup(i, "organization", var.organization)],
+    [for i in lookup(local.templates, "server", []) : lookup(i, "organization", var.organization)]
+  )))
   policies       = var.policies
   policies_model = lookup(local.intersight, "policies", {})
   pools          = var.pools
@@ -128,31 +129,25 @@ locals {
   } : {}
   chassis_loop = flatten([
     for v in lookup(local.profiles, "chassis", []) : [
-      for i in range(length(v.names_serials)) : {
+      for i in v.targets : {
         action      = lookup(v, "action", local.defaults.intersight.profiles.chassis.action)
-        description = lookup(v, "description", "")
+        description = lookup(i, "description", "")
         imc_access  = lookup(v, "imc_access_policy", "")
         imc_access_policy = length(compact([lookup(v, "imc_access_policy", "")])) > 0 ? {
           name        = v.imc_access_policy
           object_type = "access.Policy"
           policy      = "imc_access"
         } : null
-        moids = true
-        name  = "${element(element(v.names_serials, i), 0)}${local.defaults.intersight.profiles.chassis.name_suffix}"
-        organization = lookup(v, "moids", local.defaults.intersight.moids) == true ? local.orgs[
-          lookup(v, "organization", local.defaults.intersight.organization
-            )] : data.intersight_organization_organization.org_moid[lookup(
-            v, "organization", local.defaults.intersight.organization
-        )].results[0].moid
-        power = lookup(v, "power_policy", "")
+        name         = "${i.name}${local.defaults.intersight.profiles.chassis.name_suffix}"
+        organization = lookup(v, "organization", var.organization)
+        power        = lookup(v, "power_policy", "")
         power_policy = length(compact([lookup(v, "power_policy", "")])) > 0 ? {
           name        = v.power_policy
           object_type = "power.Policy"
           policy      = "power"
         } : null
-        serial_number = length(element(v.names_serials, i)
-        ) == 2 ? element(element(v.names_serials, i), 1) : ""
-        snmp = lookup(v, "snmp_policy", "")
+        serial_number = i.serial_number
+        snmp          = lookup(v, "snmp_policy", "")
         snmp_policy = length(compact([lookup(v, "snmp_policy", "")])) > 0 ? {
           name        = v.snmp_policy
           object_type = "snmp.Policy"
@@ -164,7 +159,7 @@ locals {
           object_type = "thermal.Policy"
           policy      = "thermal"
         } : null
-        tags = lookup(v, "tags", local.defaults.intersight.tags)
+        tags = lookup(v, "tags", var.tags)
         target_platform = lookup(
           v, "target_platform", local.defaults.intersight.profiles.chassis.target_platform
         )
@@ -174,12 +169,11 @@ locals {
       }
     ]
   ])
-  chassis = [
-    for v in local.chassis_loop : {
+  chassis = {
+    for v in local.chassis_loop : v.name => {
       action       = v.action
       description  = v.description
       imc_access   = v.imc_access
-      moids        = v.moids
       name         = v.name
       organization = v.organization
       policy_bucket = [
@@ -200,7 +194,8 @@ locals {
       thermal             = v.thermal
       wait_for_completion = v.wait_for_completion
     }
-  ]
+  }
+  chassis_serial_numbers = compact([for v in local.chassis : v.serial_number if v.serial_number != "unknown"])
 
   stemplates = {
     for v in lookup(local.templates, "server", []) : v.name => {
@@ -234,7 +229,7 @@ locals {
 
   server_merge_template = flatten([
     for v in lookup(local.profiles, "server", []) : [
-      for i in range(length(v.names_serials)) : {
+      for i in v.targets : {
         action = lookup(v, "action", local.defaults.intersight.profiles.server.action)
         adapter_configuration_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "adapter_configuration_policy", local.stemplates[v.ucs_server_profile_template
@@ -248,7 +243,7 @@ locals {
         certificate_management_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "certificate_management_policy", local.stemplates[v.ucs_server_profile_template
         ].certificate_management_policy) : lookup(v, "certificate_management_policy", "")
-        description = lookup(v, "description", "")
+        description = lookup(i, "description", "")
         device_connector_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "device_connector_policy", local.stemplates[v.ucs_server_profile_template
         ].device_connector_policy) : lookup(v, "device_connector_policy", "")
@@ -267,19 +262,14 @@ locals {
         local_user_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "local_user_policy", local.stemplates[v.ucs_server_profile_template
         ].local_user_policy) : lookup(v, "local_user_policy", "")
-        moids = true
-        name  = "${element(element(v.names_serials, i), 0)}${local.defaults.intersight.profiles.server.name_suffix}"
+        name = "${i.name}${local.defaults.intersight.profiles.server.name_suffix}"
         network_connectivity_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "network_connectivity_policy", local.stemplates[v.ucs_server_profile_template
         ].network_connectivity_policy) : lookup(v, "network_connectivity_policy", "")
         ntp_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "ntp_policy", local.stemplates[v.ucs_server_profile_template
         ].ntp_policy) : lookup(v, "ntp_policy", "")
-        organization = lookup(v, "moids", local.defaults.intersight.moids) == true ? local.orgs[lookup(
-          v, "organization", local.defaults.intersight.organization
-          )] : lookup(
-          v, "organization", local.defaults.intersight.organization
-        )
+        organization = lookup(v, "organization", var.organization)
         persistent_memory_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "persistent_memory_policy", local.stemplates[v.ucs_server_profile_template
         ].persistent_memory_policy) : lookup(v, "persistent_memory_policy", "")
@@ -293,8 +283,7 @@ locals {
         sd_card_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "sd_card_policy", local.stemplates[v.ucs_server_profile_template
         ].sd_card_policy) : lookup(v, "sd_card_policy", "")
-        serial_number = length(element(v.names_serials, i)
-        ) == 2 ? element(element(v.names_serials, i), 1) : ""
+        serial_number = i.serial_number
         serial_over_lan_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "serial_over_lan_policy", local.stemplates[v.ucs_server_profile_template
         ].serial_over_lan_policy) : lookup(v, "serial_over_lan_policy", "")
@@ -314,7 +303,7 @@ locals {
         syslog_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "syslog_policy", local.stemplates[v.ucs_server_profile_template
         ].syslog_policy) : lookup(v, "syslog_policy", "")
-        tags = lookup(v, "tags", local.defaults.intersight.tags)
+        tags = lookup(v, "tags", var.tags)
         target_platform = lookup(
           v, "target_platform", local.defaults.intersight.profiles.server.target_platform
         )
@@ -399,7 +388,6 @@ locals {
         object_type = "iam.EndPointUserPolicy"
         policy      = "local_user"
       } : null
-      moids                = v.moids
       name                 = v.name
       network_connectivity = lookup(v, "network_connectivity_policy", "")
       network_connectivity_policy = length(compact([v.network_connectivity_policy])) > 0 ? {
@@ -496,8 +484,8 @@ locals {
       wait_for_completion = v.wait_for_completion
     }
   ]
-  server = [
-    for v in local.server_policies : {
+  server = {
+    for v in local.server_policies : v.name => {
       action                 = v.action
       adapter_configuration  = v.adapter_configuration
       bios                   = v.bios
@@ -510,7 +498,6 @@ locals {
       lan_connectivity       = v.lan_connectivity
       ldap                   = v.ldap
       local_user             = v.local_user
-      moids                  = v.moids
       name                   = v.name
       network_connectivity   = v.network_connectivity
       ntp                    = v.ntp
@@ -566,242 +553,8 @@ locals {
       virtual_media               = v.virtual_media
       wait_for_completion         = v.wait_for_completion
     }
-  ]
-}
-
-#___________________________________________________________________________
-#
-# Intersight UCS Chassis Profile
-# GUI Location: Profiles > UCS Chassis Profile > Create UCS Chassis Profile
-#___________________________________________________________________________
-
-module "chassis" {
-  source  = "terraform-cisco-modules/profiles-chassis/intersight"
-  version = ">= 1.0.7"
-
-  for_each     = { for v in local.chassis : v.name => v }
-  action       = each.value.action
-  description  = each.value.description
-  moids        = each.value.moids
-  name         = each.value.name
-  organization = data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid
-  policies = local.moids == true ? local.policies : {
-    imc_access = length(compact([each.value.imc_access_policy])) > 0 ? {
-      for s in [each.value.imc_access_policy] : s => [
-        for i in data.intersight_access_policy.imc_access[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    snmp = length(compact([each.value.snmp_policy])) > 0 ? {
-      for s in [each.value.snmp_policy] : s => [
-        for i in data.intersight_snmp_policy.snmp[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    syslog = length(compact([each.value.syslog_policy])) > 0 ? {
-      for s in [each.value.syslog_policy] : s => [
-        for i in data.intersight_syslog_policy.syslog[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    thermal = length(compact([each.value.thermal_policy])) > 0 ? {
-      for s in [each.value.thermal_policy] : s => [
-        for i in data.intersight_thermal_policy.thermal[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
   }
-  policy_bucket       = each.value.policy_bucket
-  serial_number       = each.value.serial_number
-  tags                = each.value.tags
-  target_platform     = each.value.target_platform
-  wait_for_completion = each.value.wait_for_completion
-}
-
-
-#___________________________________________________________________________
-#
-# Intersight UCS Server Profile
-# GUI Location: Profiles > UCS Server Profile > Create UCS Server Profile
-#___________________________________________________________________________
-
-module "server" {
-  source  = "terraform-cisco-modules/profiles-server/intersight"
-  version = ">= 1.0.8"
-
-  for_each     = { for v in local.server : v.name => v }
-  action       = each.value.action
-  description  = each.value.description
-  moids        = true
-  name         = each.value.name
-  organization = data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid
-  policies = local.moids == true ? local.policies : {
-    adapter_configuration = length(compact([each.value.adapter_configuration])) > 0 ? {
-      for s in [each.value.adapter_configuration] : s => [
-        for i in data.intersight_adapter_config_policy.adapter_configuration[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    bios = length(compact([each.value.bios])) > 0 ? {
-      for s in [each.value.bios] : s => [
-        for i in data.intersight_bios_policy.bios[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    boot_order = length(compact([each.value.boot_order])) > 0 ? {
-      for s in [each.value.boot_order] : s => [
-        for i in data.intersight_boot_precision_policy.boot_order[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    certificate_management = length(compact([each.value.certificate_management])) > 0 ? {
-      for s in [each.value.certificate_management] : s => [
-        for i in data.intersight_certificatemanagement_policy.certificate_management[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    device_connector = length(compact([each.value.device_connector])) > 0 ? {
-      for s in [each.value.device_connector] : s => [
-        for i in data.intersight_deviceconnector_policy.device_connector[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    imc_access = length(compact([each.value.imc_access])) > 0 ? {
-      for s in [each.value.imc_access] : s => [
-        for i in data.intersight_access_policy.imc_access[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    ipmi_over_lan = length(compact([each.value.ipmi_over_lan])) > 0 ? {
-      for s in [each.value.ipmi_over_lan] : s => [
-        for i in data.intersight_ipmioverlan_policy.ipmi_over_lan[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    lan_connectivity = length(compact([each.value.lan_connectivity])) > 0 ? {
-      for s in [each.value.lan_connectivity] : s => [
-        for i in data.intersight_vnic_lan_connectivity_policy.lan_connectivity[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    ldap = length(compact([each.value.ldap])) > 0 ? {
-      for s in [each.value.ldap] : s => [
-        for i in data.intersight_iam_ldap_policy.ldap[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    local_user = length(compact([each.value.local_user])) > 0 ? {
-      for s in [each.value.local_user] : s => [
-        for i in data.intersight_iam_end_point_user_policy.local_user[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    network_connectivity = length(compact([each.value.network_connectivity])) > 0 ? {
-      for s in [each.value.network_connectivity] : s => [
-        for i in data.intersight_networkconfig_policy.network_connectivity[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    ntp = length(compact([each.value.ntp])) > 0 ? {
-      for s in [each.value.ntp] : s => [
-        for i in data.intersight_ntp_policy.ntp[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    persistent_memory = length(compact([each.value.persistent_memory])) > 0 ? {
-      for s in [each.value.persistent_memory] : s => [
-        for i in data.intersight_memory_persistent_memory_policy.persistent_memory[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    power = length(compact([each.value.power])) > 0 ? {
-      for s in [each.value.power] : s => [
-        for i in data.intersight_power_policy.power[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    san_connectivity = length(compact([each.value.san_connectivity])) > 0 ? {
-      for s in [each.value.san_connectivity] : s => [
-        for i in data.intersight_vnic_san_connectivity_policy.san_connectivity[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    sd_card = length(compact([each.value.sd_card])) > 0 ? {
-      for s in [each.value.sd_card] : s => [
-        for i in data.intersight_sdcard_policy.sd_card[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    serial_over_lan = length(compact([each.value.serial_over_lan])) > 0 ? {
-      for s in [each.value.serial_over_lan] : s => [
-        for i in data.intersight_sol_policy.serial_over_lan[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    smtp = length(compact([each.value.smtp])) > 0 ? {
-      for s in [each.value.smtp] : s => [
-        for i in data.intersight_smtp_policy.smtp[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    snmp = length(compact([each.value.snmp])) > 0 ? {
-      for s in [each.value.snmp] : s => [
-        for i in data.intersight_snmp_policy.snmp[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    ssh = length(compact([each.value.ssh])) > 0 ? {
-      for s in [each.value.ssh] : s => [
-        for i in data.intersight_ssh_policy.ssh[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    storage = length(compact([each.value.storage])) > 0 ? {
-      for s in [each.value.storage] : s => [
-        for i in data.intersight_storage_storage_policy.storage[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    syslog = length(compact([each.value.syslog])) > 0 ? {
-      for s in [each.value.syslog] : s => [
-        for i in data.intersight_syslog_policy.syslog[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    virtual_kvm = length(compact([each.value.virtual_kvm])) > 0 ? {
-      for s in [each.value.virtual_kvm] : s => [
-        for i in data.intersight_kvm_policy.virtual_kvm[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    virtual_media = length(compact([each.value.virtual_media])) > 0 ? {
-      for s in [each.value.virtual_media] : s => [
-        for i in data.intersight_vmedia_policy.virtual_media[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-  }
-  policy_bucket = each.value.policy_bucket
-  pools = local.moids == true ? local.pools : {
-    resource = length(compact([each.value.resource_pool])) > 0 ? {
-      for s in [each.value.resource_pool] : s => [
-        for i in data.intersight_resourcepool_pool.resource[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-    uuid = length(compact([each.value.uuid_pool])) > 0 ? {
-      for s in [each.value.uuid_pool] : s => [
-        for i in data.intersight_uuidpool_pool.uuid[s
-        ].results : i.moid if i.organization[0]
-      .moid == data.intersight_organization_organization.org_moid[each.value.organization].results[0].moid][0]
-    } : {}
-  }
-  resource_pool       = each.value.resource_pool
-  serial_number       = each.value.serial_number
-  static_uuid_address = each.value.static_uuid_address
-  tags                = each.value.tags
-  target_platform     = each.value.target_platform
-  #server_template     = each.value.ucs_server_profile_template
-  uuid_pool           = each.value.uuid_pool
-  wait_for_completion = each.value.wait_for_completion
+  server_serial_numbers = compact([for v in local.server : v.serial_number if v.serial_number != "unknown"])
+  resource_pools        = compact([for v in local.server : v.resource_pool])
+  uuid_pools            = compact([for v in local.server : v.uuid_pool])
 }
