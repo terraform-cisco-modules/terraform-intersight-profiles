@@ -276,6 +276,7 @@ locals {
         power_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "power_policy", local.stemplates[v.ucs_server_profile_template
         ].power_policy) : lookup(v, "power_policy", "")
+        reservations  = lookup(v, "reservations", [])
         resource_pool = lookup(v, "resource_pool", "")
         san_connectivity_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "san_connectivity_policy", local.stemplates[v.ucs_server_profile_template
@@ -414,6 +415,7 @@ locals {
         object_type = "power.Policy"
         policy      = "power"
       } : null
+      reservations     = v.reservations
       resource_pool    = v.resource_pool
       san_connectivity = lookup(v, "san_connectivity_policy", "")
       san_connectivity_policy = length(compact([v.san_connectivity_policy])) > 0 ? {
@@ -533,7 +535,18 @@ locals {
           ]
         ) : i if i != null
       ]
-      power                       = v.power
+      power = v.power
+      reservations = [
+        for i in v.reservations : {
+          identity         = i.identity
+          ip_type          = lookup(i, "ip_type", "IPv4")
+          management_type  = lookup(i, "management_type", "OutofBand")
+          pool_name        = i.pool_name
+          reservation_type = i.reservation_type
+          vnic_name        = lookup(i, "vnic_name", "unknown")
+          vhba_name        = lookup(i, "vhba_name", "unknown")
+        }
+      ]
       resource_pool               = v.resource_pool
       san_connectivity            = v.san_connectivity
       sd_card                     = v.sd_card

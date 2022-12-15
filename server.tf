@@ -151,6 +151,35 @@ resource "intersight_server_profile" "server" {
       object_type = policy_bucket.value.object_type
     }
   }
+  dynamic "reservations" {
+    for_each = { for v in each.value.reservations : v.identity => v if v.reservation_type == "ip" }
+    content = {
+      additional_properties = length(regexall("ip", v.reservation_type)
+        ) > 0 ? jsonencode({
+          ipType         = each.value.ip_type
+          managementType = each.value.management_type
+        }) : length(regexall("mac", each.value.reservation_type)
+        ) > 0 ? jsonencode({
+          vnicName = each.value.vnic_name
+        }) : length(regexall("wwpn", each.value.reservation_type)
+        ) > 0 ? jsonencode({
+          vhbaName = each.value.vhba_name
+      }) : ""
+      object_type = length(regexall("(wwnn|wwpn)", v.reservation_type)
+      ) > 0 ? "fcpool.ReservationReference" : "${each.value.reservations_type}pool.ReservationReference"
+      reservation_moid = length(regexall("ip", v.reservation_type)
+        ) > 0 ? var.pools.ip_reservations["${each.value.pool_name}:${each.value.identity}"
+        ].moid : length(regexall("iqn", v.reservation_type)
+        ) > 0 ? var.pools.iqn_reservations["${each.value.pool_name}:${each.value.identity}"
+        ].moid : length(regexall("mac", v.reservation_type)
+        ) > 0 ? var.pools.mac_reservations["${each.value.pool_name}:${each.value.identity}"
+        ].moid : length(regexall("uuid", v.reservation_type)
+        ) > 0 ? var.pools.uuid_reservations["${each.value.pool_name}:${each.value.identity}"
+        ].moid : length(regexall("wwnn", v.reservation_type)
+        ) > 0 ? var.pools.wwnn_reservations["${each.value.pool_name}:${each.value.identity}"
+      ].moid : var.pools.wwpn_reservations["${each.value.pool_name}:${each.value.identity}"].moid
+    }
+  }
   #dynamic "src_template" {
   #  for_each = { for v in compact([each.value.server_template]) : v => v }
   #  content {
