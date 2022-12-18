@@ -14,7 +14,6 @@ resource "intersight_chassis_profile" "chassis" {
     data.intersight_equipment_chassis.chassis,
   ]
   for_each            = local.chassis
-  action              = each.value.action
   description         = each.value.description != "" ? each.value.description : "${each.value.name} Chassis Profile."
   name                = each.value.name
   target_platform     = each.value.target_platform

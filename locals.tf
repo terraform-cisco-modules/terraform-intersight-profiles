@@ -199,7 +199,8 @@ locals {
       wait_for_completion = v.wait_for_completion
     }
   }
-  chassis_serial_numbers = compact([for v in local.chassis : v.serial_number if v.serial_number != "unknown"])
+  chassis_serial_numbers = compact([for v in local.chassis : v.serial_number if length(regexall(
+  "^([A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][1-3])[\\dA-Z]{4}$", v.serial_number)) > 0])
 
   stemplates = {
     for v in lookup(local.templates, "server", []) : v.name => {
@@ -571,7 +572,8 @@ locals {
       wait_for_completion         = v.wait_for_completion
     }
   }
-  server_serial_numbers = compact([for v in local.server : v.serial_number if v.serial_number != "unknown"])
-  resource_pools        = compact([for v in local.server : v.resource_pool])
-  uuid_pools            = compact([for v in local.server : v.uuid_pool])
+  server_serial_numbers = compact([for v in local.server : v.serial_number if length(regexall(
+  "^([A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][1-3])[\\dA-Z]{4}$", v.serial_number)) > 0])
+  resource_pools = compact([for v in local.server : v.resource_pool])
+  uuid_pools     = compact([for v in local.server : v.uuid_pool])
 }

@@ -23,7 +23,6 @@ resource "intersight_server_profile" "server" {
     data.intersight_compute_physical_summary.server
   ]
   for_each    = local.server
-  action      = each.value.action
   description = lookup(each.value, "description", "${each.value.name} Server Profile.")
   name        = each.value.name
   server_assignment_mode = length(compact(

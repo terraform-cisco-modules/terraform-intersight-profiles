@@ -36,7 +36,9 @@ A comprehensive example using this module is available here: https://github.com/
 | Name | Description |
 |------|-------------|
 | <a name="output_chassis"></a> [chassis](#output\_chassis) | Moid's of the UCS Chassis Profiles. |
+| <a name="output_depoy_chassis"></a> [depoy\_chassis](#output\_depoy\_chassis) | n/a |
 | <a name="output_server"></a> [server](#output\_server) | Moid's of the UCS Server Profiles. |
+| <a name="output_depoy_servers"></a> [depoy\_servers](#output\_depoy\_servers) | n/a |
 ## Resources
 
 | Name | Type |
