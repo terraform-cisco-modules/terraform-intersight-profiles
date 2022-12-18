@@ -21,7 +21,9 @@ resource "intersight_chassis_profile" "chassis" {
   type                = "instance"
   wait_for_completion = each.value.wait_for_completion
   organization {
-    moid        = local.orgs[each.value.organization]
+    moid = length(regexall(true, var.moids)
+      ) > 0 ? local.orgs[each.value.organization
+    ] : data.intersight_organization_organization.orgs[each.value.organization].results[0].moid
     object_type = "organization.Organization"
   }
   dynamic "assigned_chassis" {

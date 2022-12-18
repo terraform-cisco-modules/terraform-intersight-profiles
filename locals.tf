@@ -1,8 +1,12 @@
 locals {
-  defaults   = lookup(var.model, "defaults", {})
-  intersight = lookup(var.model, "intersight", {})
-  moids      = local.defaults.intersight.moids
-  orgs       = local.moids == true ? var.pools.orgs : {}
+  defaults    = lookup(var.model, "defaults", {})
+  intersight  = lookup(var.model, "intersight", {})
+  lchassis    = local.defaults.intersight.profiles.chassis
+  lserver     = local.defaults.intersight.profiles.server
+  ltemplate   = local.defaults.intersight.templates
+  moids       = var.moids
+  name_prefix = local.defaults.intersight.profiles.name_prefix
+  orgs        = local.moids == true ? var.pools.orgs : {}
   organizations = distinct(compact(concat(
     [for i in lookup(local.profiles, "chassis", []) : lookup(i, "organization", var.organization)],
     [for i in lookup(local.profiles, "server", []) : lookup(i, "organization", var.organization)],
@@ -130,7 +134,7 @@ locals {
   chassis_loop = flatten([
     for v in lookup(local.profiles, "chassis", []) : [
       for i in v.targets : {
-        action      = lookup(v, "action", local.defaults.intersight.profiles.chassis.action)
+        action      = lookup(v, "action", local.lchassis.action)
         description = lookup(i, "description", "")
         imc_access  = lookup(v, "imc_access_policy", "")
         imc_access_policy = length(compact([lookup(v, "imc_access_policy", "")])) > 0 ? {
@@ -138,7 +142,7 @@ locals {
           object_type = "access.Policy"
           policy      = "imc_access"
         } : null
-        name         = "${i.name}${local.defaults.intersight.profiles.chassis.name_suffix}"
+        name         = "${local.name_prefix}${i.name}${local.lchassis.name_suffix}"
         organization = lookup(v, "organization", var.organization)
         power        = lookup(v, "power_policy", "")
         power_policy = length(compact([lookup(v, "power_policy", "")])) > 0 ? {
@@ -161,10 +165,10 @@ locals {
         } : null
         tags = lookup(v, "tags", var.tags)
         target_platform = lookup(
-          v, "target_platform", local.defaults.intersight.profiles.chassis.target_platform
+          v, "target_platform", local.lchassis.target_platform
         )
         wait_for_completion = lookup(
-          v, "wait_for_completion", local.defaults.intersight.profiles.chassis.wait_for_completion
+          v, "wait_for_completion", local.lchassis.wait_for_completion
         )
       }
     ]
@@ -230,7 +234,7 @@ locals {
   server_merge_template = flatten([
     for v in lookup(local.profiles, "server", []) : [
       for i in v.targets : {
-        action = lookup(v, "action", local.defaults.intersight.profiles.server.action)
+        action = lookup(v, "action", local.lserver.action)
         adapter_configuration_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "adapter_configuration_policy", local.stemplates[v.ucs_server_profile_template
         ].adapter_configuration_policy) : lookup(v, "adapter_configuration_policy", "")
@@ -262,7 +266,7 @@ locals {
         local_user_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "local_user_policy", local.stemplates[v.ucs_server_profile_template
         ].local_user_policy) : lookup(v, "local_user_policy", "")
-        name = "${i.name}${local.defaults.intersight.profiles.server.name_suffix}"
+        name = "${local.name_prefix}${i.name}${local.lserver.name_suffix}"
         network_connectivity_policy = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
           v, "network_connectivity_policy", local.stemplates[v.ucs_server_profile_template
         ].network_connectivity_policy) : lookup(v, "network_connectivity_policy", "")
@@ -306,7 +310,7 @@ locals {
         ].syslog_policy) : lookup(v, "syslog_policy", "")
         tags = lookup(v, "tags", var.tags)
         target_platform = lookup(
-          v, "target_platform", local.defaults.intersight.profiles.server.target_platform
+          v, "target_platform", local.lserver.target_platform
         )
         ucs_server_profile_template = lookup(v, "ucs_server_profile_template", "")
         uuid_pool = length(compact([v.ucs_server_profile_template])) > 0 ? lookup(
@@ -319,7 +323,7 @@ locals {
           v, "virtual_media_policy", local.stemplates[v.ucs_server_profile_template
         ].virtual_media_policy) : lookup(v, "virtual_media_policy", "")
         wait_for_completion = lookup(
-          v, "wait_for_completion", local.defaults.intersight.profiles.server.wait_for_completion
+          v, "wait_for_completion", local.lserver.wait_for_completion
         )
       }
     ]
@@ -543,8 +547,8 @@ locals {
           management_type  = lookup(i, "management_type", "OutofBand")
           pool_name        = i.pool_name
           reservation_type = i.reservation_type
-          vnic_name        = lookup(i, "vnic_name", "unknown")
-          vhba_name        = lookup(i, "vhba_name", "unknown")
+          vnic_name        = lookup(i, "vnic_name", null)
+          vhba_name        = lookup(i, "vhba_name", null)
         }
       ]
       resource_pool               = v.resource_pool

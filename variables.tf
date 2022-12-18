@@ -8,6 +8,12 @@ variable "model" {
   type        = any
 }
 
+variable "moids" {
+  default     = false
+  description = "Flag to Determine if Policies Should be associated using data object or resource."
+  type        = bool
+}
+
 variable "organization" {
   default     = "default"
   description = "Name of the default intersight Organization."

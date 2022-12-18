@@ -36,7 +36,9 @@ resource "intersight_server_profile" "server" {
   ) > 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
   wait_for_completion = each.value.wait_for_completion
   organization {
-    moid        = local.orgs[each.value.organization]
+    moid = length(regexall(true, var.moids)
+      ) > 0 ? local.orgs[each.value.organization
+    ] : data.intersight_organization_organization.orgs[each.value.organization].results[0].moid
     object_type = "organization.Organization"
   }
   dynamic "assigned_server" {
@@ -66,7 +68,7 @@ resource "intersight_server_profile" "server" {
   dynamic "policy_bucket" {
     for_each = { for v in each.value.policy_bucket : v.object_type => v }
     content {
-      moid = length(regexall(true, local.moids)
+      moid = length(regexall(true, var.moids)
         ) > 0 ? var.policies[policy_bucket.value.policy][policy_bucket.value.name
         ] : length(regexall("adapter.ConfigPolicy", policy_bucket.value.object_type)
         ) > 0 ? [for i in data.intersight_adapter_config_policy.adapter_configuration[
@@ -151,19 +153,24 @@ resource "intersight_server_profile" "server" {
       object_type = policy_bucket.value.object_type
     }
   }
-  dynamic "reservations" {
-    for_each = { for v in each.value.reservations : v.identity => v if v.reservation_type == "ip" }
-    content = {
+  dynamic "reservation_references" {
+    for_each = { for v in each.value.reservations : v.identity => v }
+    content {
       additional_properties = length(regexall("ip", v.reservation_type)
         ) > 0 ? jsonencode({
-          ipType         = each.value.ip_type
-          managementType = each.value.management_type
+          ConsumerType = length(regexall("IP", each.value.ip_type)
+            ) > 0 && length(regexall("Band", each.value.management_type)
+          ) > 0 ? "${each.value.management_type}${title(each.value.ip_type)}-Access" : "ISCSI"
+          ConsumerName = each.value.vnic_name
         }) : length(regexall("mac", each.value.reservation_type)
         ) > 0 ? jsonencode({
-          vnicName = each.value.vnic_name
-        }) : length(regexall("wwpn", each.value.reservation_type)
+          ConsumerType = "Vnic"
+          ConsumerName = each.value.vnic_name
+        }) : length(regexall("ww", each.value.reservation_type)
         ) > 0 ? jsonencode({
-          vhbaName = each.value.vhba_name
+          ConsumerType = length(regexall("wwnn", each.value.reservation_type)
+          ) > 0 ? "WWNN" : "Vhba"
+          ConsumerName = each.value.vhba_name
       }) : ""
       object_type = length(regexall("(wwnn|wwpn)", v.reservation_type)
       ) > 0 ? "fcpool.ReservationReference" : "${each.value.reservations_type}pool.ReservationReference"

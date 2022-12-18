@@ -3,6 +3,13 @@
 # Moid Data Source
 #____________________________________________________________
 
+data "intersight_organization_organization" "orgs" {
+  for_each = {
+    for v in local.data_policies : v => v if var.moids == false
+  }
+  name = each.value
+}
+
 data "intersight_adapter_config_policy" "adapter_configuration" {
   for_each = {
     for v in local.data_policies : v.name => v if local.moids == false && v.object_type == "adapter.ConfigPolicy"
