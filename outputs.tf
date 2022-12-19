@@ -10,6 +10,10 @@ output "chassis" {
   ) : v => intersight_chassis_profile.chassis[v].moid } : {}
 }
 
+output "chassis_profiles" {
+  value = local.chassis
+}
+
 output "deploy_chassis" {
   value = {
     for v in sort(keys(intersight_chassis_profile.chassis)
@@ -30,6 +34,10 @@ output "server" {
   value = length(lookup(local.profiles, "server", [])) > 0 ? { for v in sort(
     keys(intersight_server_profile.server)
   ) : v => intersight_server_profile.server[v].moid } : {}
+}
+
+output "server_profiles" {
+  value = local.server
 }
 
 output "deploy_servers" {
