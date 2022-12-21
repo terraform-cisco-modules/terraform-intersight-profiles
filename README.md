@@ -31,14 +31,13 @@ A comprehensive example using this module is available here: https://github.com/
 | <a name="input_policies"></a> [policies](#input\_policies) | Policies Moids. | `any` | n/a | yes |
 | <a name="input_pools"></a> [pools](#input\_pools) | Pool Moids. | `any` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | List of Key/Value Pairs to Assign as Attributes to the Policy. | `list(map(string))` | `[]` | no |
+| <a name="input_time_sleep"></a> [time\_sleep](#input\_time\_sleep) | This is just a dummy place holder to get around the challenge with depends\_on | `string` | n/a | yes |
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_chassis"></a> [chassis](#output\_chassis) | Moid's of the UCS Chassis Profiles. |
-| <a name="output_depoy_chassis"></a> [depoy\_chassis](#output\_depoy\_chassis) | n/a |
-| <a name="output_server"></a> [server](#output\_server) | Moid's of the UCS Server Profiles. |
-| <a name="output_depoy_servers"></a> [depoy\_servers](#output\_depoy\_servers) | n/a |
+| <a name="output_chassis"></a> [chassis](#output\_chassis) | Moid and Policies for the Chassis Profiles |
+| <a name="output_server"></a> [server](#output\_server) | Moid and Policies for the Server Profiles |
 ## Resources
 
 | Name | Type |

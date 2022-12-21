@@ -19,6 +19,15 @@ resource "intersight_chassis_profile" "chassis" {
   target_platform     = each.value.target_platform
   type                = "instance"
   wait_for_completion = each.value.wait_for_completion
+  lifecycle {
+    ignore_changes = [
+      action,
+      additional_properties,
+      config_context,
+      mod_time,
+      wait_for_completion
+    ]
+  }
   organization {
     moid = length(regexall(true, var.moids)
       ) > 0 ? local.orgs[each.value.organization

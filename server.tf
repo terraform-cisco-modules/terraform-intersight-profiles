@@ -26,7 +26,9 @@ resource "intersight_server_profile" "server" {
   description = lookup(each.value, "description", "${each.value.name} Server Profile.")
   name        = each.value.name
   server_assignment_mode = length(compact(
-  [each.value.resource_pool])) > 0 ? "Pool" : each.value.serial_number != "unknown" ? "Static" : "None"
+    [each.value.resource_pool])) > 0 ? "Pool" : length(regexall(
+    "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][1-3])[\\dA-Z]{4}$", each.value.serial_number)
+  ) > 0 ? "Static" : "None"
   static_uuid_address = each.value.static_uuid_address
   target_platform     = each.value.target_platform
   type                = "instance"
@@ -34,6 +36,15 @@ resource "intersight_server_profile" "server" {
     compact([each.value.uuid_pool])
   ) > 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
   wait_for_completion = each.value.wait_for_completion
+  lifecycle {
+    ignore_changes = [
+      action,
+      config_context,
+      mod_time,
+      uuid_lease,
+      wait_for_completion
+    ]
+  }
   organization {
     moid = length(regexall(true, var.moids)
       ) > 0 ? local.orgs[each.value.organization

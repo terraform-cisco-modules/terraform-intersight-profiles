@@ -35,3 +35,8 @@ variable "tags" {
   description = "List of Key/Value Pairs to Assign as Attributes to the Policy."
   type        = list(map(string))
 }
+
+variable "time_sleep" {
+  description = "This is just a dummy place holder to get around the challenge with depends_on"
+  type        = string
+}
