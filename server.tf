@@ -55,7 +55,9 @@ resource "intersight_server_profile" "server" {
     for_each = {
       for v in compact(
         [each.value.serial_number]
-      ) : v => v if length(compact([each.value.resource_pool])) == 0 && each.value.serial_number != "unknown"
+        ) : v => v if length(compact([each.value.resource_pool])) == 0 && length(
+        regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][1-3])[\\dA-Z]{4}$", each.value.serial_number)
+      ) > 0
     }
     content {
       moid = data.intersight_compute_physical_summary.server[each.value.serial_number].results[0].moid
