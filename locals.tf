@@ -6,8 +6,8 @@ locals {
   model       = var.model
   name_prefix = local.defaults.profiles.name_prefix
   orgs        = var.orgs
-  profiles    = lookup(lookup(local.model, "profiles", {}), var.organization, [])
-  templates   = lookup(lookup(local.model, "templates", {}), var.organization, [])
+  profiles    = var.profiles.profiles
+  templates   = var.profiles.templates
   data_search = {
     adapter_configuration  = data.intersight_search_search_item.adapter_configuration
     bios                   = data.intersight_search_search_item.bios
