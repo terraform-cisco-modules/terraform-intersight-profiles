@@ -1,16 +1,27 @@
 #__________________________________________________________________
 #
-# Model Data and policy from domains and pools
+# Model Data for Profiles and Moids for Policies and Pools
 #__________________________________________________________________
 
-variable "model" {
-  description = "Model data."
+variable "defaults" {
+  description = "Map of Defaults for Pools."
   type        = any
 }
 
-variable "moids" {
+variable "model" {
+  description = "YAML to HCL data."
+  type        = any
+}
+
+variable "moids_policies" {
   default     = false
-  description = "Flag to Determine if Policies Should be associated using data object or resource."
+  description = "Flag to Determine if Policies Should be associated using resource or data object."
+  type        = bool
+}
+
+variable "moids_pools" {
+  default     = false
+  description = "Flag to Determine if Pools Should be associated using data object or from var.pools."
   type        = bool
 }
 
@@ -20,6 +31,11 @@ variable "organization" {
   type        = string
 }
 
+variable "orgs" {
+  description = "Input orgs List."
+  type        = any
+}
+
 variable "policies" {
   description = "Policies Moids."
   type        = any
@@ -27,6 +43,11 @@ variable "policies" {
 
 variable "pools" {
   description = "Pool Moids."
+  type        = any
+}
+
+variable "profiles" {
+  description = "Profiles - YAML to HCL data."
   type        = any
 }
 

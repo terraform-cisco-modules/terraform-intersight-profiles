@@ -25,53 +25,59 @@ A comprehensive example using this module is available here: https://github.com/
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_model"></a> [model](#input\_model) | Model data. | `any` | n/a | yes |
-| <a name="input_moids"></a> [moids](#input\_moids) | Flag to Determine if Policies Should be associated using data object or resource. | `bool` | `false` | no |
+| <a name="input_defaults"></a> [defaults](#input\_defaults) | Map of Defaults for Pools. | `any` | n/a | yes |
+| <a name="input_model"></a> [model](#input\_model) | YAML to HCL data. | `any` | n/a | yes |
+| <a name="input_moids_policies"></a> [moids\_policies](#input\_moids\_policies) | Flag to Determine if Policies Should be associated using resource or data object. | `bool` | `false` | no |
+| <a name="input_moids_pools"></a> [moids\_pools](#input\_moids\_pools) | Flag to Determine if Pools Should be associated using data object or from var.pools. | `bool` | `false` | no |
 | <a name="input_organization"></a> [organization](#input\_organization) | Name of the default intersight Organization. | `string` | `"default"` | no |
 | <a name="input_policies"></a> [policies](#input\_policies) | Policies Moids. | `any` | n/a | yes |
 | <a name="input_pools"></a> [pools](#input\_pools) | Pool Moids. | `any` | n/a | yes |
+| <a name="input_profiles"></a> [profiles](#input\_profiles) | Profiles - YAML to HCL data. | `any` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | List of Key/Value Pairs to Assign as Attributes to the Policy. | `list(map(string))` | `[]` | no |
 | <a name="input_time_sleep"></a> [time\_sleep](#input\_time\_sleep) | This is just a dummy place holder to get around the challenge with depends\_on | `string` | n/a | yes |
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_chassis"></a> [chassis](#output\_chassis) | Moid and Policies for the Chassis Profiles |
-| <a name="output_server"></a> [server](#output\_server) | Moid and Policies for the Server Profiles |
+| <a name="output_chassis"></a> [chassis](#output\_chassis) | Moid and Policies for the Chassis Profiles. |
+| <a name="output_server"></a> [server](#output\_server) | Moid and Policies for the Server Profiles. |
+| <a name="output_template"></a> [template](#output\_template) | Moid and Policies for the Server Profile Templates. |
 ## Resources
 
 | Name | Type |
 |------|------|
+| [intersight_bulk_mo_cloner.servers_from_template](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/bulk_mo_cloner) | resource |
 | [intersight_chassis_profile.chassis](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/chassis_profile) | resource |
 | [intersight_server_profile.server](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/server_profile) | resource |
-| [intersight_access_policy.imc_access](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/access_policy) | data source |
-| [intersight_adapter_config_policy.adapter_configuration](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/adapter_config_policy) | data source |
-| [intersight_bios_policy.bios](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/bios_policy) | data source |
-| [intersight_boot_precision_policy.boot_order](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/boot_precision_policy) | data source |
-| [intersight_certificatemanagement_policy.certificate_management](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/certificatemanagement_policy) | data source |
+| [intersight_server_profile_template.template](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/server_profile_template) | resource |
 | [intersight_compute_physical_summary.server](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/compute_physical_summary) | data source |
-| [intersight_deviceconnector_policy.device_connector](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/deviceconnector_policy) | data source |
 | [intersight_equipment_chassis.chassis](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/equipment_chassis) | data source |
-| [intersight_iam_end_point_user_policy.local_user](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/iam_end_point_user_policy) | data source |
-| [intersight_iam_ldap_policy.ldap](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/iam_ldap_policy) | data source |
-| [intersight_ipmioverlan_policy.ipmi_over_lan](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/ipmioverlan_policy) | data source |
-| [intersight_kvm_policy.virtual_kvm](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/kvm_policy) | data source |
-| [intersight_memory_persistent_memory_policy.persistent_memory](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/memory_persistent_memory_policy) | data source |
-| [intersight_networkconfig_policy.network_connectivity](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/networkconfig_policy) | data source |
-| [intersight_ntp_policy.ntp](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/ntp_policy) | data source |
 | [intersight_organization_organization.orgs](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/organization_organization) | data source |
-| [intersight_power_policy.power](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/power_policy) | data source |
-| [intersight_resourcepool_pool.resource_pool](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/resourcepool_pool) | data source |
-| [intersight_sdcard_policy.sd_card](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/sdcard_policy) | data source |
-| [intersight_smtp_policy.smtp](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/smtp_policy) | data source |
-| [intersight_snmp_policy.snmp](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/snmp_policy) | data source |
-| [intersight_sol_policy.serial_over_lan](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/sol_policy) | data source |
-| [intersight_ssh_policy.ssh](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/ssh_policy) | data source |
-| [intersight_storage_storage_policy.storage](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/storage_storage_policy) | data source |
-| [intersight_syslog_policy.syslog](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/syslog_policy) | data source |
-| [intersight_thermal_policy.thermal](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/thermal_policy) | data source |
-| [intersight_uuidpool_pool.uuid](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/uuidpool_pool) | data source |
-| [intersight_vmedia_policy.virtual_media](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/vmedia_policy) | data source |
-| [intersight_vnic_lan_connectivity_policy.lan_connectivity](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/vnic_lan_connectivity_policy) | data source |
-| [intersight_vnic_san_connectivity_policy.san_connectivity](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/vnic_san_connectivity_policy) | data source |
+| [intersight_search_search_item.adapter_configuration](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.bios](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.boot_order](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.certificate_management](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.device_connector](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.imc_access](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.ipmi_over_lan](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.lan_connectivity](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.ldap](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.local_user](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.network_connectivity](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.ntp](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.persistent_memory](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.power](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.resource_pool](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.san_connectivity](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.sd_card](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.serial_over_lan](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.smtp](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.snmp](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.ssh](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.storage](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.syslog](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.thermal](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.uuid](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.virtual_kvm](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.virtual_media](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 <!-- END_TF_DOCS -->
