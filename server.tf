@@ -27,7 +27,7 @@ resource "intersight_server_profile" "server" {
   description = lookup(each.value, "description", "${each.value.name} Server Profile.")
   name        = each.value.name
   server_assignment_mode = length(regexall("UNUSED", each.value.resource_pool.name)) == 0 ? "Pool" : length(regexall(
-    "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][1-3])[\\dA-Z]{4}$", each.value.serial_number)
+    "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
   ) > 0 ? "Static" : "None"
   static_uuid_address = each.value.static_uuid_address
   target_platform     = each.value.target_platform
@@ -50,7 +50,7 @@ resource "intersight_server_profile" "server" {
   dynamic "assigned_server" {
     for_each = {
       for v in compact([each.value.serial_number]) : v => v if each.value.resource_pool.name != "UNUSED" && length(
-        regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][1-3])[\\dA-Z]{4}$", each.value.serial_number)
+        regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
       ) > 0
     }
     content {

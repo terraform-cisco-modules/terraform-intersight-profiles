@@ -249,7 +249,7 @@ locals {
     }
   }
   chassis_serial_numbers = compact([for v in local.chassis : v.serial_number if length(regexall(
-  "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][1-3])[\\dA-Z]{4}$", v.serial_number)) > 0])
+  "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0])
 
   #_________________________________________________________________________________________
   #
@@ -1201,5 +1201,5 @@ locals {
     }
   }
   server_serial_numbers = compact([for v in local.server : v.serial_number if length(regexall(
-  "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][1-3])[\\dA-Z]{4}$", v.serial_number)) > 0])
+  "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0])
 }
