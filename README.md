@@ -20,7 +20,7 @@ A comprehensive example using this module is available here: https://github.com/
 
 | Name | Version |
 |------|---------|
-| <a name="provider_intersight"></a> [intersight](#provider\_intersight) | >=1.0.32 |
+| <a name="provider_intersight"></a> [intersight](#provider\_intersight) | 1.0.36 |
 ## Inputs
 
 | Name | Description | Type | Default | Required |
@@ -30,6 +30,7 @@ A comprehensive example using this module is available here: https://github.com/
 | <a name="input_moids_policies"></a> [moids\_policies](#input\_moids\_policies) | Flag to Determine if Policies Should be associated using resource or data object. | `bool` | `false` | no |
 | <a name="input_moids_pools"></a> [moids\_pools](#input\_moids\_pools) | Flag to Determine if Pools Should be associated using data object or from var.pools. | `bool` | `false` | no |
 | <a name="input_organization"></a> [organization](#input\_organization) | Name of the default intersight Organization. | `string` | `"default"` | no |
+| <a name="input_orgs"></a> [orgs](#input\_orgs) | Input orgs List. | `any` | n/a | yes |
 | <a name="input_policies"></a> [policies](#input\_policies) | Policies Moids. | `any` | n/a | yes |
 | <a name="input_pools"></a> [pools](#input\_pools) | Pool Moids. | `any` | n/a | yes |
 | <a name="input_profiles"></a> [profiles](#input\_profiles) | Profiles - YAML to HCL data. | `any` | n/a | yes |
@@ -52,12 +53,12 @@ A comprehensive example using this module is available here: https://github.com/
 | [intersight_server_profile_template.template](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/server_profile_template) | resource |
 | [intersight_compute_physical_summary.server](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/compute_physical_summary) | data source |
 | [intersight_equipment_chassis.chassis](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/equipment_chassis) | data source |
-| [intersight_organization_organization.orgs](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/organization_organization) | data source |
 | [intersight_search_search_item.adapter_configuration](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 | [intersight_search_search_item.bios](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 | [intersight_search_search_item.boot_order](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 | [intersight_search_search_item.certificate_management](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 | [intersight_search_search_item.device_connector](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.firmware](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 | [intersight_search_search_item.imc_access](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 | [intersight_search_search_item.ipmi_over_lan](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 | [intersight_search_search_item.lan_connectivity](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |

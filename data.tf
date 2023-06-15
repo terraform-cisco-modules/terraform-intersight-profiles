@@ -28,6 +28,11 @@ data "intersight_search_search_item" "device_connector" {
   additional_properties = jsonencode({ "ObjectType" = "deviceconnector.Policy" })
 }
 
+data "intersight_search_search_item" "firmware" {
+  for_each              = { for v in [0] : v => v if length(local.firmware) > 0 && var.moids_policies == true }
+  additional_properties = jsonencode({ "ObjectType" = "firmware.Policy" })
+}
+
 data "intersight_search_search_item" "imc_access" {
   for_each              = { for v in [0] : v => v if length(local.imc_access) > 0 && var.moids_policies == true }
   additional_properties = jsonencode({ "ObjectType" = "access.Policy" })

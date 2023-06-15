@@ -58,6 +58,10 @@ locals {
     [for i in local.server : i.device_connector_policy],
     [for i in local.template : i.device_connector_policy]
   )))
+  firmware = distinct(compact(concat(
+    [for i in local.server : i.firmware_policy],
+    [for i in local.template : i.firmware_policy]
+  )))
   imc_access = distinct(compact(concat(
     [for i in local.chassis : i.imc_access_policy],
     [for i in local.server : i.imc_access_policy],
@@ -325,6 +329,20 @@ locals {
         merge(v.device_connector_policy, {
           object_type = "deviceconnector.Policy"
           policy      = "device_connector"
+        })) : {
+        name = "UNUSED"
+        org  = "UNUSED"
+      }
+      firmware_policy = lookup(v, "firmware_policy", "") != "" ? try(
+        {
+          name        = tostring(v.firmware_policy)
+          object_type = "firmware.Policy"
+          org         = var.organization
+          policy      = "firmware"
+        },
+        merge(v.firmware_policy, {
+          object_type = "firmware.Policy"
+          policy      = "firmware"
         })) : {
         name = "UNUSED"
         org  = "UNUSED"
@@ -625,6 +643,7 @@ locals {
       description = v.description
       device_connector_policy = length(regexall("UNUSED", v.device_connector_policy.name)
       ) == 0 ? v.device_connector_policy.name : ""
+      firmware_policy   = length(regexall("UNUSED", v.firmware_policy.name)) == 0 ? v.firmware_policy.name : ""
       imc_access_policy = length(regexall("UNUSED", v.imc_access_policy.name)) == 0 ? v.imc_access_policy.name : ""
       ipmi_over_lan_policy = length(regexall("UNUSED", v.ipmi_over_lan_policy.name)
       ) == 0 ? v.ipmi_over_lan_policy.name : ""
@@ -646,6 +665,7 @@ locals {
             v.bios_policy,
             v.certificate_management_policy,
             v.device_connector_policy,
+            v.firmware_policy,
             v.imc_access_policy,
             v.ipmi_over_lan_policy,
             v.lan_connectivity_policy,
@@ -761,6 +781,20 @@ locals {
           merge(v.device_connector_policy, {
             object_type = "deviceconnector.Policy"
             policy      = "device_connector"
+          })) : {
+          name = "UNUSED"
+          org  = "UNUSED"
+        }
+        firmware_policy = lookup(v, "firmware_policy", "") != "" ? try(
+          {
+            name        = tostring(v.firmware_policy)
+            object_type = "firmware.Policy"
+            org         = var.organization
+            policy      = "firmware"
+          },
+          merge(v.firmware_policy, {
+            object_type = "firmware.Policy"
+            policy      = "firmware"
           })) : {
           name = "UNUSED"
           org  = "UNUSED"
@@ -943,6 +977,14 @@ locals {
           org  = "UNUSED"
         }
         serial_number = lookup(i, "serial_number", "unknown")
+        pre_assign = [
+          for e in lookup(i, "pre_assign", {}) : {
+            chassis_id    = lookup(e, "chassis_id", 0)
+            domain_name   = lookup(e, "domain_name", "")
+            serial_number = lookup(e, "serial_number", "")
+            slot_id       = lookup(e, "slot_id", 0)
+          }
+        ][0]
         serial_over_lan_policy = lookup(v, "serial_over_lan_policy", "") != "" ? try(
           {
             name        = tostring(v.serial_over_lan_policy)
@@ -1084,6 +1126,7 @@ locals {
             v.bios_policy,
             v.certificate_management_policy,
             v.device_connector_policy,
+            v.firmware_policy,
             v.imc_access_policy,
             v.ipmi_over_lan_policy,
             v.lan_connectivity_policy,
@@ -1115,6 +1158,7 @@ locals {
       description          = v.description
       device_connector_policy = length(regexall("UNUSED", v.device_connector_policy.name)
       ) == 0 ? v.device_connector_policy.name : ""
+      firmware_policy   = length(regexall("UNUSED", v.firmware_policy.name)) == 0 ? v.firmware_policy.name : ""
       imc_access_policy = length(regexall("UNUSED", v.imc_access_policy.name)) == 0 ? v.imc_access_policy.name : ""
       ipmi_over_lan_policy = length(regexall("UNUSED", v.ipmi_over_lan_policy.name)
       ) == 0 ? v.ipmi_over_lan_policy.name : ""
@@ -1165,6 +1209,7 @@ locals {
       create_from_template          = v.create_from_template
       description                   = v.description
       device_connector_policy       = v.device_connector_policy
+      firmware_policy               = v.firmware_policy
       imc_access_policy             = v.imc_access_policy
       ipmi_over_lan_policy          = v.ipmi_over_lan_policy
       lan_connectivity_policy       = v.lan_connectivity_policy

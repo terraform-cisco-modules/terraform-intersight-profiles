@@ -1,17 +1,8 @@
-#____________________________________________________________
+#__________________________________________________________________________
 #
-# Intersight UCS Server Profile Resource
-# GUI Location: Profiles > UCS Server Profile > Create
-#____________________________________________________________
-
-#data "intersight_server_profile_template" "template" {
-#  for_each = {
-#    for v in compact([local.server_templates]) : v => v if length(
-#      regexall("[[:xdigit:]]{24}", local.server_template)
-#    ) == 0
-#  }
-#  name = each.value
-#}
+# Intersight Server Profile Resource
+# GUI Location: Profiles > UCS Server Profiles > Create UCS Server Profile
+#__________________________________________________________________________
 
 data "intersight_compute_physical_summary" "server" {
   for_each = { for v in local.server_serial_numbers : v => v }
@@ -29,6 +20,15 @@ resource "intersight_server_profile" "server" {
   server_assignment_mode = length(regexall("UNUSED", each.value.resource_pool.name)) == 0 ? "Pool" : length(regexall(
     "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
   ) > 0 ? "Static" : "None"
+  server_pre_assign_by_serial = lookup(each.value.pre_assign, "serial", "")
+  server_pre_assign_by_slot = [{
+    additional_properties = ""
+    chassis_id            = lookup(each.value.pre_assign, "chassis_id", 0)
+    class_id              = "server.ServerAssignTypeSlot"
+    domain_name           = lookup(each.value.pre_assign, "domain_name", "")
+    object_type           = "server.ServerAssignTypeSlot"
+    slot_id               = lookup(each.value.pre_assign, "slot_id", 0)
+  }]
   static_uuid_address = each.value.static_uuid_address
   target_platform     = each.value.target_platform
   type                = "instance"

@@ -1,3 +1,18 @@
+#__________________________________________________________________________
+#
+# Intersight Server Profile Template Resource
+# GUI Location: Templates > Create UCS Server Profile Template
+#__________________________________________________________________________
+
+#data "intersight_server_profile_template" "template" {
+#  for_each = {
+#    for v in compact([local.server_templates]) : v => v if length(
+#      regexall("[[:xdigit:]]{24}", local.server_template)
+#    ) == 0
+#  }
+#  name = each.value
+#}
+
 resource "intersight_server_profile_template" "template" {
   for_each        = { for k, v in local.template : k => v if v.create_template == true }
   name            = each.value.name
