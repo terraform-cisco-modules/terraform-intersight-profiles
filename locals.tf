@@ -1,13 +1,14 @@
 locals {
-  defaults    = var.defaults
-  lchassis    = local.defaults.profiles.chassis
+  defaults = var.defaults
+  lchassis = local.defaults.profiles.chassis
+  #ldomain     = local.defaults.profiles.domain
   lserver     = local.defaults.profiles.server
   ltemplate   = local.defaults.templates.server
   model       = var.model
   name_prefix = local.defaults.profiles.name_prefix
   orgs        = var.orgs
-  profiles    = var.profiles.profiles
-  templates   = var.profiles.templates
+  profiles    = lookup(var.profiles, "profiles", {})
+  templates   = lookup(var.profiles, "templates", {})
   data_search = {
     adapter_configuration  = data.intersight_search_search_item.adapter_configuration
     bios                   = data.intersight_search_search_item.bios

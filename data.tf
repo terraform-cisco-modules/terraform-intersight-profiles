@@ -128,6 +128,11 @@ data "intersight_search_search_item" "thermal" {
   additional_properties = jsonencode({ "ObjectType" = "thermal.Policy" })
 }
 
+data "intersight_search_search_item" "uuid" {
+  for_each              = { for v in [0] : v => v if length(local.uuid) > 0 && var.moids_pools == true }
+  additional_properties = jsonencode({ "ObjectType" = "uuidpool.Pool" })
+}
+
 data "intersight_search_search_item" "virtual_kvm" {
   for_each              = { for v in [0] : v => v if length(local.virtual_kvm) > 0 && var.moids_policies == true }
   additional_properties = jsonencode({ "ObjectType" = "kvm.Policy" })
@@ -136,9 +141,4 @@ data "intersight_search_search_item" "virtual_kvm" {
 data "intersight_search_search_item" "virtual_media" {
   for_each              = { for v in [0] : v => v if length(local.virtual_media) > 0 && var.moids_policies == true }
   additional_properties = jsonencode({ "ObjectType" = "vmedia.Policy" })
-}
-
-data "intersight_search_search_item" "uuid" {
-  for_each              = { for v in [0] : v => v if length(local.uuid) > 0 && var.moids_pools == true }
-  additional_properties = jsonencode({ "ObjectType" = "uuidpool.Pool" })
 }
