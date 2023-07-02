@@ -15,7 +15,7 @@ A comprehensive example using this module is available here: https://github.com/
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >=1.3.0 |
-| <a name="requirement_intersight"></a> [intersight](#requirement\_intersight) | >=1.0.32 |
+| <a name="requirement_intersight"></a> [intersight](#requirement\_intersight) | >=1.0.36 |
 ## Providers
 
 | Name | Version |
@@ -25,7 +25,6 @@ A comprehensive example using this module is available here: https://github.com/
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_defaults"></a> [defaults](#input\_defaults) | Map of Defaults for Pools. | `any` | n/a | yes |
 | <a name="input_model"></a> [model](#input\_model) | YAML to HCL data. | `any` | n/a | yes |
 | <a name="input_moids_policies"></a> [moids\_policies](#input\_moids\_policies) | Flag to Determine if Policies Should be associated using resource or data object. | `bool` | `false` | no |
 | <a name="input_moids_pools"></a> [moids\_pools](#input\_moids\_pools) | Flag to Determine if Pools Should be associated using data object or from var.pools. | `bool` | `false` | no |

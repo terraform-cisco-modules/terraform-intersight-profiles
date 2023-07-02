@@ -3,10 +3,10 @@
 # Model Data for Profiles and Moids for Policies and Pools
 #__________________________________________________________________
 
-variable "defaults" {
-  description = "Map of Defaults for Pools."
-  type        = any
-}
+#variable "defaults" {
+#  description = "Map of Defaults for Pools."
+#  type        = any
+#}
 
 variable "model" {
   description = "YAML to HCL data."

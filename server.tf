@@ -14,20 +14,20 @@ resource "intersight_server_profile" "server" {
     data.intersight_compute_physical_summary.server,
     intersight_server_profile_template.template
   ]
-  for_each    = { for k, v in local.server : k => v if v.create_from_template == false }
+  for_each    = { for k, v in local.server : k => v }
   description = lookup(each.value, "description", "${each.value.name} Server Profile.")
   name        = each.value.name
   server_assignment_mode = length(regexall("UNUSED", each.value.resource_pool.name)) == 0 ? "Pool" : length(regexall(
     "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
   ) > 0 ? "Static" : "None"
-  server_pre_assign_by_serial = lookup(each.value.pre_assign, "serial", "")
+  server_pre_assign_by_serial = each.value.pre_assign.serial_number
   server_pre_assign_by_slot = [{
     additional_properties = ""
-    chassis_id            = lookup(each.value.pre_assign, "chassis_id", 0)
+    chassis_id            = each.value.pre_assign.chassis_id
     class_id              = "server.ServerAssignTypeSlot"
-    domain_name           = lookup(each.value.pre_assign, "domain_name", "")
+    domain_name           = each.value.pre_assign.domain_name
     object_type           = "server.ServerAssignTypeSlot"
-    slot_id               = lookup(each.value.pre_assign, "slot_id", 0)
+    slot_id               = each.value.pre_assign.slot_id
   }]
   static_uuid_address = each.value.static_uuid_address
   target_platform     = each.value.target_platform
@@ -49,7 +49,7 @@ resource "intersight_server_profile" "server" {
   }
   dynamic "assigned_server" {
     for_each = {
-      for v in compact([each.value.serial_number]) : v => v if each.value.resource_pool.name != "UNUSED" && length(
+      for v in compact([each.value.serial_number]) : v => v if each.value.resource_pool.name == "UNUSED" && length(
         regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
       ) > 0
     }
@@ -132,7 +132,7 @@ resource "intersight_server_profile" "server" {
     }
   }
   dynamic "uuid_pool" {
-    for_each = { for v in compact([each.value.uuid_pool.name]) : v => v }
+    for_each = { for v in compact([each.value.uuid_pool.name]) : v => v if each.value.create_from_template == false }
     content {
       moid = length(regexall(false, var.moids_pools)) > 0 ? var.pools[each.value.uuid_pool.org].uuid[
         each.value.uuid_pool.name

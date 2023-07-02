@@ -1,14 +1,23 @@
 locals {
-  defaults = var.defaults
+  defaults = yamldecode(file("${path.module}/defaults.yaml"))
   lchassis = local.defaults.profiles.chassis
   #ldomain     = local.defaults.profiles.domain
-  lserver     = local.defaults.profiles.server
-  ltemplate   = local.defaults.templates.server
-  model       = var.model
-  name_prefix = local.defaults.profiles.name_prefix
-  orgs        = var.orgs
-  profiles    = lookup(var.profiles, "profiles", {})
-  templates   = lookup(var.profiles, "templates", {})
+  lserver   = local.defaults.profiles.server
+  ltemplate = local.defaults.templates.server
+  model     = var.model
+  name_prefix = [for v in [merge(lookup(local.profiles, "name_prefix", {}), local.defaults.profiles.name_prefix)] : {
+    chassis  = v.chassis != "" ? v.chassis : v.default
+    server   = v.server != "" ? v.server : v.server
+    template = v.template != "" ? v.template : v.template
+  }][0]
+  name_suffix = [for v in [merge(lookup(local.profiles, "name_suffix", {}), local.defaults.profiles.name_suffix)] : {
+    chassis  = v.chassis != "" ? v.chassis : v.default
+    server   = v.server != "" ? v.server : v.server
+    template = v.template != "" ? v.template : v.template
+  }][0]
+  orgs      = var.orgs
+  profiles  = lookup(var.profiles, "profiles", {})
+  templates = lookup(var.profiles, "templates", {})
   data_search = {
     adapter_configuration  = data.intersight_search_search_item.adapter_configuration
     bios                   = data.intersight_search_search_item.bios
@@ -176,7 +185,7 @@ locals {
           name = "UNUSED"
           org  = "UNUSED"
         }
-        name         = "${local.name_prefix}${i.name}${local.lchassis.name_suffix}"
+        name         = "${local.name_prefix.chassis}${i.name}${local.name_suffix.chassis}"
         organization = var.organization
         power_policy = lookup(v, "power_policy", "") != "" ? try(
           {
@@ -418,7 +427,7 @@ locals {
         name = "UNUSED"
         org  = "UNUSED"
       }
-      name = "${local.name_prefix}${v.name}${local.ltemplate.name_suffix}"
+      name = "${local.name_prefix.template}${v.name}${local.name_suffix.template}"
       network_connectivity_policy = lookup(v, "network_connectivity_policy", "") != "" ? try(
         {
           name        = tostring(v.network_connectivity_policy)
@@ -870,7 +879,7 @@ locals {
           name = "UNUSED"
           org  = "UNUSED"
         }
-        name = "${local.name_prefix}${i.name}${local.lserver.name_suffix}"
+        name = "${local.name_prefix.server}${i.name}${local.name_suffix.server}"
         network_connectivity_policy = lookup(v, "network_connectivity_policy", "") != "" ? try(
           {
             name        = tostring(v.network_connectivity_policy)
@@ -928,6 +937,14 @@ locals {
           name = "UNUSED"
           org  = "UNUSED"
         }
+        pre_assign = [
+          for e in [lookup(i, "pre_assign", {})] : {
+            chassis_id    = lookup(e, "chassis_id", 0)
+            domain_name   = lookup(v, "domain_name", "")
+            serial_number = lookup(e, "serial_number", "")
+            slot_id       = lookup(e, "slot_id", 0)
+          }
+        ][0]
         reservations = [
           for i in lookup(v, "reservations", []) : {
             identity         = i.identity
@@ -978,14 +995,6 @@ locals {
           org  = "UNUSED"
         }
         serial_number = lookup(i, "serial_number", "unknown")
-        pre_assign = [
-          for e in lookup(i, "pre_assign", {}) : {
-            chassis_id    = lookup(e, "chassis_id", 0)
-            domain_name   = lookup(e, "domain_name", "")
-            serial_number = lookup(e, "serial_number", "")
-            slot_id       = lookup(e, "slot_id", 0)
-          }
-        ][0]
         serial_over_lan_policy = lookup(v, "serial_over_lan_policy", "") != "" ? try(
           {
             name        = tostring(v.serial_over_lan_policy)
@@ -1175,6 +1184,7 @@ locals {
       persistent_memory_policy = length(regexall("UNUSED", v.persistent_memory_policy.name)
       ) == 0 ? v.persistent_memory_policy.name : ""
       power_policy  = length(regexall("UNUSED", v.power_policy.name)) == 0 ? v.power_policy.name : ""
+      pre_assign    = v.pre_assign
       reservations  = v.reservations
       resource_pool = v.resource_pool
       san_connectivity_policy = length(regexall("UNUSED", v.san_connectivity_policy.name)
@@ -1224,6 +1234,7 @@ locals {
       policy_bucket = length(compact([v.ucs_server_profile_template])
       ) > 0 ? concat(v.policy_bucket, local.template[v.ucs_server_profile_template].policy_bucket) : v.policy_bucket
       power_policy            = v.power_policy
+      pre_assign              = v.pre_assign
       reservations            = v.reservations
       resource_pool           = v.resource_pool
       san_connectivity_policy = v.san_connectivity_policy
