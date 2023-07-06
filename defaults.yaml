@@ -38,6 +38,7 @@ profiles:
         serial_number: ''
         slot_id: 0
       serial_number: '' # Required if not assigned from Resource Pool.
+      static_uuid_address: ''
     tags: # Optional List of Map of String
       key: ''
       value: ''

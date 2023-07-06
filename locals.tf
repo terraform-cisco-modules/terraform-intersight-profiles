@@ -24,6 +24,7 @@ locals {
     boot_order             = data.intersight_search_search_item.boot_order
     certificate_management = data.intersight_search_search_item.certificate_management
     device_connector       = data.intersight_search_search_item.device_connector
+    drive_security         = data.intersight_search_search_item.drive_security
     imc_access             = data.intersight_search_search_item.imc_access
     ipmi_over_lan          = data.intersight_search_search_item.ipmi_over_lan
     lan_connectivity       = data.intersight_search_search_item.lan_connectivity
@@ -67,6 +68,10 @@ locals {
   device_connector = distinct(compact(concat(
     [for i in local.server : i.device_connector_policy],
     [for i in local.template : i.device_connector_policy]
+  )))
+  drive_security = distinct(compact(concat(
+    [for i in local.server : i.drive_security_policy],
+    [for i in local.template : i.drive_security_policy]
   )))
   firmware = distinct(compact(concat(
     [for i in local.server : i.firmware_policy],
@@ -339,6 +344,20 @@ locals {
         merge(v.device_connector_policy, {
           object_type = "deviceconnector.Policy"
           policy      = "device_connector"
+        })) : {
+        name = "UNUSED"
+        org  = "UNUSED"
+      }
+      drive_security_policy = lookup(v, "drive_security_policy", "") != "" ? try(
+        {
+          name        = tostring(v.drive_security_policy)
+          object_type = "storage.DriveSecurityPolicy"
+          org         = var.organization
+          policy      = "device_connector"
+        },
+        merge(v.drive_security_policy, {
+          object_type = "storage.DriveSecurityPolicy"
+          policy      = "drive_security"
         })) : {
         name = "UNUSED"
         org  = "UNUSED"
@@ -653,6 +672,8 @@ locals {
       description = v.description
       device_connector_policy = length(regexall("UNUSED", v.device_connector_policy.name)
       ) == 0 ? v.device_connector_policy.name : ""
+      drive_security_policy = length(regexall("UNUSED", v.drive_security_policy.name)
+      ) == 0 ? v.drive_security_policy.name : ""
       firmware_policy   = length(regexall("UNUSED", v.firmware_policy.name)) == 0 ? v.firmware_policy.name : ""
       imc_access_policy = length(regexall("UNUSED", v.imc_access_policy.name)) == 0 ? v.imc_access_policy.name : ""
       ipmi_over_lan_policy = length(regexall("UNUSED", v.ipmi_over_lan_policy.name)
@@ -675,6 +696,7 @@ locals {
             v.bios_policy,
             v.certificate_management_policy,
             v.device_connector_policy,
+            v.drive_security_policy,
             v.firmware_policy,
             v.imc_access_policy,
             v.ipmi_over_lan_policy,
@@ -791,6 +813,20 @@ locals {
           merge(v.device_connector_policy, {
             object_type = "deviceconnector.Policy"
             policy      = "device_connector"
+          })) : {
+          name = "UNUSED"
+          org  = "UNUSED"
+        }
+        drive_security_policy = lookup(v, "drive_security_policy", "") != "" ? try(
+          {
+            name        = tostring(v.drive_security_policy)
+            object_type = "storage.DriveSecurityPolicy"
+            org         = var.organization
+            policy      = "device_connector"
+          },
+          merge(v.drive_security_policy, {
+            object_type = "storage.DriveSecurityPolicy"
+            policy      = "drive_security"
           })) : {
           name = "UNUSED"
           org  = "UNUSED"
@@ -1136,6 +1172,7 @@ locals {
             v.bios_policy,
             v.certificate_management_policy,
             v.device_connector_policy,
+            v.drive_security_policy,
             v.firmware_policy,
             v.imc_access_policy,
             v.ipmi_over_lan_policy,
@@ -1168,6 +1205,8 @@ locals {
       description          = v.description
       device_connector_policy = length(regexall("UNUSED", v.device_connector_policy.name)
       ) == 0 ? v.device_connector_policy.name : ""
+      drive_security_policy = length(regexall("UNUSED", v.drive_security_policy.name)
+      ) == 0 ? v.drive_security_policy.name : ""
       firmware_policy   = length(regexall("UNUSED", v.firmware_policy.name)) == 0 ? v.firmware_policy.name : ""
       imc_access_policy = length(regexall("UNUSED", v.imc_access_policy.name)) == 0 ? v.imc_access_policy.name : ""
       ipmi_over_lan_policy = length(regexall("UNUSED", v.ipmi_over_lan_policy.name)
@@ -1220,6 +1259,7 @@ locals {
       create_from_template          = v.create_from_template
       description                   = v.description
       device_connector_policy       = v.device_connector_policy
+      drive_security_policy         = v.drive_security_policy
       firmware_policy               = v.firmware_policy
       imc_access_policy             = v.imc_access_policy
       ipmi_over_lan_policy          = v.ipmi_over_lan_policy

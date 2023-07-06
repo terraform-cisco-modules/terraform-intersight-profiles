@@ -57,6 +57,7 @@ A comprehensive example using this module is available here: https://github.com/
 | [intersight_search_search_item.boot_order](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 | [intersight_search_search_item.certificate_management](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 | [intersight_search_search_item.device_connector](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.drive_security](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 | [intersight_search_search_item.firmware](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 | [intersight_search_search_item.imc_access](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 | [intersight_search_search_item.ipmi_over_lan](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
