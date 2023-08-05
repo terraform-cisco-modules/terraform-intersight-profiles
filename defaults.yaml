@@ -2,18 +2,12 @@
 profiles:
   chassis:
     action: No-op
-    domain_type: instance
-    imc_access_policy: ''
-    power_policy: ''
-    snmp_policy: ''
-    tags: # Optional List of Map of String
-      key: ''
-      value: ''
-    targets: # List of Chassis Targets
-      description: ''
-      name: '**REQUIRED**'
-      serial_number: '**REQUIRED**' # If deploying without physical chassis assign "unknown"
-    thermal_policy: ''
+    description: ''
+    imc_access_policy: UNUSED
+    power_policy: UNUSED
+    serial_number: unknown
+    snmp_policy: UNUSED
+    thermal_policy: UNUSED
     target_platform: FIAttached
   name_prefix:
     default: ''
@@ -28,104 +22,66 @@ profiles:
   server:
     action: No-op
     create_from_template: false # If True ucs_server_profile_template must be assigned
-    domain_name: ''
-    resource_pool: '' # If used don't assign serial number to targets
-    targets: # List of Server Targets
-      description: ''
-      name: '**REQUIRED**'
-      pre_assign:
-        chassis_id: 0
-        serial_number: ''
-        slot_id: 0
-      serial_number: '' # Required if not assigned from Resource Pool.
-      static_uuid_address: ''
-    tags: # Optional List of Map of String
-      key: ''
-      value: ''
+    description: ''
+    name: '**REQUIRED**'
+    pre_assign:
+      chassis_id: 0
+      domain_name: ''
+      serial_number: ''
+      slot_id: 0
+    resource_pool: UNUSED # If used don't assign serial number to targets
+    reservations:
+      ip_type: IPv4
+      management_type: OutofBand
+      vnic_name: null
+      vhba_name: null
+    serial_number: unknown # Required if not assigned from Resource Pool.
+    static_uuid_address: ''
     target_platform: FIAttached
-    ucs_server_profile_template: ''
+    ucs_server_template: ''
+policy_bucket:
+    resource_pool: UNUSED
     #===========================
     # Compute Configuration
     #===========================
-    bios_policy_policy: ''
-    boot_order_policy: ''
-    firmware_policy: ''
-    persistent_memory_policy: '' # Standalone Only
-    power_policy: ''             # FIAttached Only
-    uuid_pool: ''                # FIAttached Only
-    virtual_media_policy: ''
+    bios_policy: UNUSED
+    boot_order_policy: UNUSED
+    firmware_policy: UNUSED
+    persistent_memory_policy: UNUSED # Standalone Only
+    power_policy: UNUSED             # FIAttached Only
+    uuid_pool: UNUSED                # FIAttached Only
+    virtual_media_policy: UNUSED
     #===========================
     # Management Configuration
     #===========================
-    certificate_management_policy: '' # FIAttached Only
-    device_connector_policy: ''       # Standalone Only
-    imc_access_policy: ''             # FIAttached Only
-    ipmi_over_lan_policy: ''
-    ldap_policy: ''                   # Standalone Only
-    local_user_policy: ''
-    network_connectivity_policy: ''   # Standalone Only
-    ntp_policy: ''                    # Standalone Only
-    serial_over_lan_policy: ''
-    smtp_policy: ''                   # Standalone Only
-    snmp_policy: ''
-    ssh_policy: ''                    # Standalone Only
-    syslog_policy: ''
-    virtual_kvm_policy: ''
+    certificate_management_policy: UNUSED
+    device_connector_policy: UNUSED     # Standalone Only
+    imc_access_policy: UNUSED           # FIAttached Only
+    ipmi_over_lan_policy: UNUSED
+    ldap_policy: UNUSED                 # Standalone Only
+    local_user_policy: UNUSED
+    network_connectivity_policy: UNUSED # Standalone Only
+    ntp_policy: UNUSED                  # Standalone Only
+    serial_over_lan_policy: UNUSED
+    smtp_policy: UNUSED                 # Standalone Only
+    snmp_policy: UNUSED
+    ssh_policy: UNUSED                  # Standalone Only
+    syslog_policy: UNUSED
+    virtual_kvm_policy: UNUSED
     #===========================
     # Storage Configuration
     #===========================
-    sd_card_policy: ''
-    storage_policy: ''
+    drive_security: UNUSED
+    sd_card_policy: UNUSED
+    storage_policy: UNUSED
     #===========================
     # Network Configuration
     #===========================
-    adapter_configuration_policy: '' # Standalone Only
-    lan_connectivity_policy: ''
-    san_connectivity_policy: ''
+    adapter_configuration_policy: UNUSED # Standalone Only
+    lan_connectivity_policy: UNUSED
+    san_connectivity_policy: UNUSED
 templates:
   server:
     create_template: false
     description: ''
-    name: '**REQUIRED**'
-    tags: # Optional List of Map of String
-      key: ''
-      value: ''
     target_platform: FIAttached
-    #===========================
-    # Compute Configuration
-    #===========================
-    bios_policy: ''
-    boot_order_policy: ''
-    firmware_policy: ''
-    persistent_memory_policy: '' # Standalone Only
-    power_policy: ''             # FIAttached Only
-    uuid_pool: ''                # FIAttached Only
-    virtual_media_policy: ''
-    #===========================
-    # Management Configuration
-    #===========================
-    certificate_management_policy: '' # FIAttached Only
-    device_connector_policy: ''       # Standalone Only
-    imc_access_policy: ''             # FIAttached Only
-    ipmi_over_lan_policy: ''
-    ldap_policy: ''                   # Standalone Only
-    local_user_policy: ''
-    network_connectivity_policy: ''   # Standalone Only
-    ntp_policy: ''                    # Standalone Only
-    serial_over_lan_policy: ''
-    smtp_policy: ''                   # Standalone Only
-    snmp_policy: ''
-    ssh_policy: ''                    # Standalone Only
-    syslog_policy: ''
-    virtual_kvm_policy: ''
-    #===========================
-    # Storage Configuration
-    #===========================
-    sd_card_policy: ''
-    storage_policy: ''
-    #===========================
-    # Network Configuration
-    #===========================
-    adapter_configuration_policy: '' # Standalone Only
-    lan_connectivity_policy: ''
-    san_connectivity_policy: ''

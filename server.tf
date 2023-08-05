@@ -12,12 +12,13 @@ data "intersight_compute_physical_summary" "server" {
 resource "intersight_server_profile" "server" {
   depends_on = [
     data.intersight_compute_physical_summary.server,
-    intersight_server_profile_template.template
+    intersight_server_profile_template.template,
+    intersight_bulk_mo_cloner.servers_from_template
   ]
   for_each    = { for k, v in local.server : k => v }
   description = lookup(each.value, "description", "${each.value.name} Server Profile.")
   name        = each.value.name
-  server_assignment_mode = length(regexall("UNUSED", each.value.resource_pool.name)) == 0 ? "Pool" : length(regexall(
+  server_assignment_mode = length(regexall("UNUSED", each.value.resource_pool)) == 0 ? "Pool" : length(regexall(
     "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
   ) > 0 ? "Static" : "None"
   server_pre_assign_by_serial = each.value.pre_assign.serial_number
@@ -32,7 +33,7 @@ resource "intersight_server_profile" "server" {
   static_uuid_address = each.value.static_uuid_address
   target_platform     = each.value.target_platform
   type                = "instance"
-  uuid_address_type = length(regexall("UNUSED", each.value.uuid_pool.name)
+  uuid_address_type = length(regexall("UNUSED", each.value.uuid_pool)
   ) == 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
   lifecycle {
     ignore_changes = [
@@ -49,7 +50,7 @@ resource "intersight_server_profile" "server" {
   }
   dynamic "assigned_server" {
     for_each = {
-      for v in compact([each.value.serial_number]) : v => v if each.value.resource_pool.name == "UNUSED" && length(
+      for v in compact([each.value.serial_number]) : v => v if each.value.resource_pool == "UNUSED" && length(
         regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
       ) > 0
     }
@@ -60,19 +61,19 @@ resource "intersight_server_profile" "server" {
     }
   }
   dynamic "associated_server_pool" {
-    for_each = {
-      for v in compact([each.value.resource_pool.name]) : v => v if each.value.resource_pool.name != "UNUSED"
-    }
+    for_each = { for v in each.value.policy_bucket : v.name => v if v.object_type == "resourcepool.Pool" }
     content {
-      moid = [for i in data.intersight_search_search_item.resource_pool[0
-        ].results : i.moid if jsondecode(i.additional_properties).Organization[0
-        ].Moid == local.orgs[each.value.resource_pool.org
-      ] && jsondecode(i.additional_properties).Name == each.value.resource_pool.name][0]
+      moid = length(regexall(false, var.moids_pools)) > 0 ? var.pools[associated_server_pool.value.org].uuid[
+        associated_server_pool.value.name
+        ] : [for i in data.intersight_search_search_item.resource[0].results : i.moid if jsondecode(
+          i.additional_properties).Organization[0].Moid == local.orgs[associated_server_pool.value.org
+      ] && jsondecode(i.additional_properties).Name == associated_server_pool.value.name][0]
       object_type = "resourcepool.Pool"
     }
   }
   dynamic "policy_bucket" {
-    for_each = { for v in each.value.policy_bucket : v.object_type => v if each.value.create_from_template == false }
+    for_each = { for v in each.value.policy_bucket : v.object_type => v if length(regexall("pool", v.object_type)
+    ) == 0 && each.value.create_from_template == false }
     content {
       moid = length(regexall(false, var.moids_policies)) > 0 && length(regexall(
         policy_bucket.value.org, each.value.organization)) > 0 ? var.policies[policy_bucket.value.org][
@@ -117,7 +118,7 @@ resource "intersight_server_profile" "server" {
     }
   }
   dynamic "src_template" {
-    for_each = { for v in compact([each.value.ucs_server_profile_template]
+    for_each = { for v in compact([each.value.ucs_server_template]
     ) : v => v if each.value.create_from_template == true }
     content {
       moid        = intersight_server_profile_template.template[src_template.value].moid
@@ -132,13 +133,16 @@ resource "intersight_server_profile" "server" {
     }
   }
   dynamic "uuid_pool" {
-    for_each = { for v in compact([each.value.uuid_pool.name]) : v => v if each.value.create_from_template == false }
+    for_each = {
+      for v in each.value.policy_bucket : v.name => v if length(regexall("uuidpool.Pool", v.object_type)
+      ) > 0 && each.value.create_from_template == false
+    }
     content {
-      moid = length(regexall(false, var.moids_pools)) > 0 ? var.pools[each.value.uuid_pool.org].uuid[
-        each.value.uuid_pool.name
+      moid = length(regexall(false, var.moids_pools)) > 0 ? var.pools[uuid_pool.value.org].uuid[
+        uuid_pool.value.name
         ] : [for i in data.intersight_search_search_item.uuid[0].results : i.moid if jsondecode(
-          i.additional_properties).Organization[0].Moid == local.orgs[each.value.uuid_pool.org
-      ] && jsondecode(i.additional_properties).Name == each.value.uuid_pool.name][0]
+          i.additional_properties).Organization[0].Moid == local.orgs[uuid_pool.value.org
+      ] && jsondecode(i.additional_properties).Name == uuid_pool.value.name][0]
       object_type = "uuidpool.Pool"
     }
   }
