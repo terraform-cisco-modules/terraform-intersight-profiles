@@ -9,10 +9,10 @@ data "intersight_compute_physical_summary" "server" {
   serial   = each.value
 }
 
-resource "intersight_server_profile" "server" {
+resource "intersight_server_profile" "map" {
   depends_on = [
     data.intersight_compute_physical_summary.server,
-    intersight_server_profile_template.template,
+    intersight_server_profile_template.map,
     intersight_bulk_mo_cloner.servers_from_template
   ]
   for_each    = { for k, v in local.server : k => v }
@@ -121,7 +121,7 @@ resource "intersight_server_profile" "server" {
     for_each = { for v in compact([each.value.ucs_server_template]
     ) : v => v if each.value.create_from_template == true }
     content {
-      moid        = intersight_server_profile_template.template[src_template.value].moid
+      moid        = intersight_server_profile_template.map[src_template.value].moid
       object_type = "server.ProfileTemplate"
     }
   }

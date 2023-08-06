@@ -13,7 +13,7 @@
 #  name = each.value
 #}
 
-resource "intersight_server_profile_template" "template" {
+resource "intersight_server_profile_template" "map" {
   for_each        = { for k, v in local.template : k => v if v.create_template == true }
   name            = each.value.name
   description     = lookup(each.value, "description", "${each.value.name} Server Profile Template.")
@@ -72,8 +72,8 @@ resource "intersight_bulk_mo_cloner" "servers_from_template" {
     ignore_changes = all # This is required for this resource type
   }
   sources {
-    object_type = intersight_server_profile_template.template[each.value.ucs_server_template].object_type
-    moid        = intersight_server_profile_template.template[each.value.ucs_server_template].moid
+    object_type = intersight_server_profile_template.map[each.value.ucs_server_template].object_type
+    moid        = intersight_server_profile_template.map[each.value.ucs_server_template].moid
   }
   targets {
     object_type = "server.Profile"

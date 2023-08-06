@@ -9,7 +9,7 @@ data "intersight_equipment_chassis" "chassis" {
   serial   = each.value
 }
 
-resource "intersight_chassis_profile" "chassis" {
+resource "intersight_chassis_profile" "map" {
   depends_on = [
     data.intersight_equipment_chassis.chassis,
   ]
