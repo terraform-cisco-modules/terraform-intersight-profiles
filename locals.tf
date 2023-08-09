@@ -184,7 +184,7 @@ locals {
 
   server = { for v in local.servers : v.name => merge(v, {
     policy_bucket = length(compact([v.ucs_server_template])
-    ) > 0 ? concat(v.policy_bucket, local.template[v.ucs_server_template].policy_bucket) : v.policy_bucket
+    ) > 0 ? merge(local.template[v.ucs_server_template].policy_bucket, v.policy_bucket) : v.policy_bucket
     target_platform = v.create_from_template == true && length(compact([v.ucs_server_template])
     ) > 0 ? local.template[v.ucs_server_template].target_platform : v.target_platform
     uuid_pool = length(compact([v.ucs_server_template])) > 0 ? local.template[v.ucs_server_template].uuid_pool : v.uuid_pool
