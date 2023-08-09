@@ -27,16 +27,7 @@ A Terraform module to configure Intersight Infrastructure Profiles.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_model"></a> [model](#input\_model) | YAML to HCL data. | `any` | n/a | yes |
-| <a name="input_moids_policies"></a> [moids\_policies](#input\_moids\_policies) | Flag to Determine if Policies Should be associated using resource or data object. | `bool` | `false` | no |
-| <a name="input_moids_pools"></a> [moids\_pools](#input\_moids\_pools) | Flag to Determine if Pools Should be associated using data object or from var.pools. | `bool` | `false` | no |
-| <a name="input_organization"></a> [organization](#input\_organization) | Name of the default intersight Organization. | `string` | `"default"` | no |
-| <a name="input_orgs"></a> [orgs](#input\_orgs) | Input orgs List. | `any` | n/a | yes |
-| <a name="input_policies"></a> [policies](#input\_policies) | Policies Moids. | `any` | n/a | yes |
-| <a name="input_pools"></a> [pools](#input\_pools) | Pool Moids. | `any` | n/a | yes |
 | <a name="input_profiles"></a> [profiles](#input\_profiles) | Profiles - YAML to HCL data. | `any` | n/a | yes |
-| <a name="input_tags"></a> [tags](#input\_tags) | List of Key/Value Pairs to Assign as Attributes to the Policy. | `list(map(string))` | `[]` | no |
-| <a name="input_time_sleep"></a> [time\_sleep](#input\_time\_sleep) | This is just a dummy place holder to get around the challenge with depends\_on | `string` | n/a | yes |
 ## Outputs
 
 | Name | Description |

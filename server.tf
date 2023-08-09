@@ -63,7 +63,7 @@ resource "intersight_server_profile" "map" {
   dynamic "associated_server_pool" {
     for_each = { for v in each.value.policy_bucket : v.name => v if v.object_type == "resourcepool.Pool" }
     content {
-      moid = length(regexall(false, var.moids_pools)) > 0 ? var.pools[associated_server_pool.value.org].uuid[
+      moid = length(regexall(false, local.moids_pools)) > 0 ? local.pools[associated_server_pool.value.org].uuid[
         associated_server_pool.value.name
         ] : [for i in data.intersight_search_search_item.resource[0].results : i.moid if jsondecode(
           i.additional_properties).Organization[0].Moid == local.orgs[associated_server_pool.value.org
@@ -75,8 +75,8 @@ resource "intersight_server_profile" "map" {
     for_each = { for v in each.value.policy_bucket : v.object_type => v if length(regexall("pool", v.object_type)
     ) == 0 && each.value.create_from_template == false }
     content {
-      moid = length(regexall(false, var.moids_policies)) > 0 && length(regexall(
-        policy_bucket.value.org, each.value.organization)) > 0 ? var.policies[policy_bucket.value.org][
+      moid = length(regexall(false, local.moids_policies)) > 0 && length(regexall(
+        policy_bucket.value.org, each.value.organization)) > 0 ? local.policies[policy_bucket.value.org][
         policy_bucket.value.policy][policy_bucket.value.name] : [for i in local.data_search[
           policy_bucket.value.policy][0].results : i.moid if jsondecode(i.additional_properties
           ).Organization.Moid == local.orgs[policy_bucket.value.org] && jsondecode(i.additional_properties
@@ -105,16 +105,16 @@ resource "intersight_server_profile" "map" {
       object_type = length(regexall("(wwnn|wwpn)", v.reservation_type)
       ) > 0 ? "fcpool.ReservationReference" : "${each.value.reservations_type}pool.ReservationReference"
       reservation_moid = length(regexall("ip", v.reservation_type)
-        ) > 0 ? var.pools[each.value.organization].ip_reservations["${each.value.pool_name}:${each.value.identity}"
+        ) > 0 ? local.pools[each.value.organization].ip_reservations["${each.value.pool_name}:${each.value.identity}"
         ].moid : length(regexall("iqn", v.reservation_type)
-        ) > 0 ? var.pools[each.value.organization].iqn_reservations["${each.value.pool_name}:${each.value.identity}"
+        ) > 0 ? local.pools[each.value.organization].iqn_reservations["${each.value.pool_name}:${each.value.identity}"
         ].moid : length(regexall("mac", v.reservation_type)
-        ) > 0 ? var.pools[each.value.organization].mac_reservations["${each.value.pool_name}:${each.value.identity}"
+        ) > 0 ? local.pools[each.value.organization].mac_reservations["${each.value.pool_name}:${each.value.identity}"
         ].moid : length(regexall("uuid", v.reservation_type)
-        ) > 0 ? var.pools[each.value.organization].uuid_reservations["${each.value.pool_name}:${each.value.identity}"
+        ) > 0 ? local.pools[each.value.organization].uuid_reservations["${each.value.pool_name}:${each.value.identity}"
         ].moid : length(regexall("wwnn", v.reservation_type)
-        ) > 0 ? var.pools[each.value.organization].wwnn_reservations["${each.value.pool_name}:${each.value.identity}"
-      ].moid : var.pools[each.value.organization].wwpn_reservations["${each.value.pool_name}:${each.value.identity}"].moid
+        ) > 0 ? local.pools[each.value.organization].wwnn_reservations["${each.value.pool_name}:${each.value.identity}"
+      ].moid : local.pools[each.value.organization].wwpn_reservations["${each.value.pool_name}:${each.value.identity}"].moid
     }
   }
   dynamic "src_template" {
@@ -138,7 +138,7 @@ resource "intersight_server_profile" "map" {
       ) > 0 && each.value.create_from_template == false
     }
     content {
-      moid = length(regexall(false, var.moids_pools)) > 0 ? var.pools[uuid_pool.value.org].uuid[
+      moid = length(regexall(false, local.moids_pools)) > 0 ? local.pools[uuid_pool.value.org].uuid[
         uuid_pool.value.name
         ] : [for i in data.intersight_search_search_item.uuid[0].results : i.moid if jsondecode(
           i.additional_properties).Organization[0].Moid == local.orgs[uuid_pool.value.org

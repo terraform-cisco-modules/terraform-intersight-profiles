@@ -1,9 +1,10 @@
 locals {
-  defaults  = yamldecode(file("${path.module}/defaults.yaml"))
-  lchassis  = local.defaults.profiles.chassis
-  lserver   = local.defaults.profiles.server
-  ltemplate = local.defaults.templates.server
-  model     = var.model
+  defaults       = yamldecode(file("${path.module}/defaults.yaml"))
+  lchassis       = local.defaults.profiles.chassis
+  lserver        = local.defaults.profiles.server
+  ltemplate      = local.defaults.templates.server
+  moids_policies = var.profiles.global_settings.moids_policies
+  moids_pools    = var.profiles.global_settings.moids_pools
 
   name_prefix = [for v in [merge(lookup(local.profiles, "name_prefix", {}), local.defaults.profiles.name_prefix)] : {
     chassis  = v.chassis != "" ? v.chassis : v.default
@@ -16,7 +17,9 @@ locals {
     template = v.template != "" ? v.template : v.default
   }][0]
 
-  orgs      = var.orgs
+  orgs      = var.profiles.orgs
+  policies  = var.profiles.policies
+  pools     = var.profiles.pools
   profiles  = lookup(var.profiles, "profiles", {})
   templates = lookup(var.profiles, "templates", {})
 
@@ -27,6 +30,7 @@ locals {
     certificate_management = data.intersight_search_search_item.certificate_management
     device_connector       = data.intersight_search_search_item.device_connector
     drive_security         = data.intersight_search_search_item.drive_security
+    firmware               = data.intersight_search_search_item.firmware
     imc_access             = data.intersight_search_search_item.imc_access
     ipmi_over_lan          = data.intersight_search_search_item.ipmi_over_lan
     lan_connectivity       = data.intersight_search_search_item.lan_connectivity
@@ -56,10 +60,10 @@ locals {
   # Get Policy Names from Profiles and Templates
   #_________________________________________________________________________________________
 
-  pb = { for i in local.bucket.policies : "${trimsuffix(trimsuffix(i, "_policy"), "_pool")}" => distinct(compact(concat(
-    [for e in local.chassis : lookup(e, "${i}", "UNUSED") if lookup(e, "${i}", "UNUSED") != "UNUSED"],
-    [for e in local.server : lookup(e, "${i}", "") if lookup(e, "${i}", "UNUSED") != "UNUSED"],
-    [for e in local.template : lookup(e, "${i}", "") if lookup(e, "${i}", "UNUSED") != "UNUSED"]
+  pb = { for i in local.bucket.policies : trimsuffix(trimsuffix(i, "_policy"), "_pool") => distinct(compact(concat(
+    [for e in local.chassis : lookup(e, i, "UNUSED") if lookup(e, i, "UNUSED") != "UNUSED"],
+    [for e in local.server : lookup(e, i, "") if lookup(e, i, "UNUSED") != "UNUSED"],
+    [for e in local.template : lookup(e, i, "") if lookup(e, i, "UNUSED") != "UNUSED"]
   ))) }
 
   #_________________________________________________________________________________________
@@ -118,21 +122,21 @@ locals {
   # Chassis Profile
   #_________________________________________________________________________________________
 
-  chassis = { for i in flatten([for v in lookup(local.profiles, "chassis", []) : [
+  chassis = { for d in flatten([for v in lookup(local.profiles, "chassis", []) : [
     for i in v.targets : merge(local.lchassis, v, i, {
       name         = "${local.name_prefix.chassis}${i.name}${local.name_suffix.chassis}"
-      organization = var.organization
+      organization = var.profiles.organization
       policy_bucket = [
         for e in local.bucket.chassis : {
           name        = lookup(v, e, "UNUSED")
           object_type = local.bucket[e].object_type
-          org         = var.organization
+          org         = var.profiles.organization
           policy      = local.bucket[e].policy
         } if lookup(v, e, "UNUSED") != "UNUSED"
       ]
-      tags = lookup(v, "tags", var.tags)
+      tags = lookup(v, "tags", var.profiles.global_settings.tags)
     })
-  ]]) : i.name => i }
+  ]]) : d.name => d }
 
   chassis_serial_numbers = compact([for v in local.chassis : v.serial_number if length(regexall(
   "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0])
@@ -145,16 +149,16 @@ locals {
     local.defaults.policy_bucket, local.ltemplate, v, {
       key          = v.name
       name         = "${local.name_prefix.template}${v.name}${local.name_suffix.template}"
-      organization = var.organization
+      organization = var.profiles.organization
       policy_bucket = [
         for e in setsubtract(local.bucket.policies, local.bucket[v.target_platform]) : {
           name        = lookup(v, e, "UNUSED")
           object_type = local.bucket[e].object_type
-          org         = var.organization
+          org         = var.profiles.organization
           policy      = local.bucket[e].policy
         } if lookup(v, e, "UNUSED") != "UNUSED"
       ]
-      tags = lookup(v, "tags", var.tags)
+      tags = lookup(v, "tags", var.profiles.global_settings.tags)
     }
   )]) : i.key => i }
 
@@ -166,7 +170,7 @@ locals {
   servers = { for i in flatten([for v in lookup(local.profiles, "server", []) : [
     for i in v.targets : merge(local.defaults.policy_bucket, local.lserver, v, i, {
       name         = "${local.name_prefix.server}${i.name}${local.name_suffix.server}"
-      organization = var.organization
+      organization = var.profiles.organization
       policy_bucket = [
         for e in setsubtract(local.bucket.policies, local.bucket[v.target_platform]) : {
           name        = lookup(v, e, "UNUSED")
@@ -178,7 +182,7 @@ locals {
         domain_name = lookup(v, "domain_name", "") }
       )
       reservations = [for e in lookup(v, "reservations", []) : merge(local.lserver.reservations, e)]
-      tags         = lookup(v, "tags", var.tags)
+      tags         = lookup(v, "tags", var.profiles.global_settings.tags)
     })
   ]]) : i.name => i }
 
