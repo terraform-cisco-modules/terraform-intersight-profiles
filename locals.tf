@@ -126,14 +126,12 @@ locals {
     for i in v.targets : merge(local.lchassis, v, i, {
       name         = "${local.name_prefix.chassis}${i.name}${local.name_suffix.chassis}"
       organization = var.profiles.organization
-      policy_bucket = [
-        for e in local.bucket.chassis : {
-          name        = lookup(v, e, "UNUSED")
-          object_type = local.bucket[e].object_type
-          org         = var.profiles.organization
-          policy      = local.bucket[e].policy
-        } if lookup(v, e, "UNUSED") != "UNUSED"
-      ]
+      policy_bucket = { for e in local.bucket.chassis : replace(local.bucket[e].object_type, ".", "") => {
+        name        = lookup(v, e, "UNUSED")
+        object_type = local.bucket[e].object_type
+        org         = var.profiles.organization
+        policy      = local.bucket[e].policy
+      } if lookup(v, e, "UNUSED") != "UNUSED" }
       tags = lookup(v, "tags", var.profiles.global_settings.tags)
     })
   ]]) : d.name => d }
@@ -150,14 +148,13 @@ locals {
       key          = v.name
       name         = "${local.name_prefix.template}${v.name}${local.name_suffix.template}"
       organization = var.profiles.organization
-      policy_bucket = [
-        for e in setsubtract(local.bucket.policies, local.bucket[v.target_platform]) : {
-          name        = lookup(v, e, "UNUSED")
-          object_type = local.bucket[e].object_type
-          org         = var.profiles.organization
-          policy      = local.bucket[e].policy
-        } if lookup(v, e, "UNUSED") != "UNUSED"
-      ]
+      policy_bucket = { for e in setsubtract(local.bucket.policies, local.bucket[v.target_platform]
+        ) : replace(local.bucket[e].object_type, ".", "") => {
+        name        = lookup(v, e, "UNUSED")
+        object_type = local.bucket[e].object_type
+        org         = var.profiles.organization
+        policy      = local.bucket[e].policy
+      } if lookup(v, e, "UNUSED") != "UNUSED" }
       tags = lookup(v, "tags", var.profiles.global_settings.tags)
     }
   )]) : i.key => i }
@@ -171,13 +168,12 @@ locals {
     for i in v.targets : merge(local.defaults.policy_bucket, local.lserver, v, i, {
       name         = "${local.name_prefix.server}${i.name}${local.name_suffix.server}"
       organization = var.profiles.organization
-      policy_bucket = [
-        for e in setsubtract(local.bucket.policies, local.bucket[v.target_platform]) : {
-          name        = lookup(v, e, "UNUSED")
-          object_type = local.bucket[e].object_type
-          policy      = local.bucket[e].policy
-        } if lookup(v, e, "UNUSED") != "UNUSED"
-      ]
+      policy_bucket = { for e in setsubtract(local.bucket.policies, local.bucket[v.target_platform]
+        ) : replace(local.bucket[e].object_type, ".", "") => {
+        name        = lookup(v, e, "UNUSED")
+        object_type = local.bucket[e].object_type
+        policy      = local.bucket[e].policy
+      } if lookup(v, e, "UNUSED") != "UNUSED" }
       pre_assign = merge(local.lserver.pre_assign, lookup(i, "pre_assign", {}), {
         domain_name = lookup(v, "domain_name", "") }
       )
