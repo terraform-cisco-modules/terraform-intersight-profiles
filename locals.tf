@@ -172,6 +172,7 @@ locals {
         ) : replace(local.bucket[e].object_type, ".", "") => {
         name        = lookup(v, e, "UNUSED")
         object_type = local.bucket[e].object_type
+        org         = var.profiles.organization
         policy      = local.bucket[e].policy
       } if lookup(v, e, "UNUSED") != "UNUSED" }
       pre_assign = merge(local.lserver.pre_assign, lookup(i, "pre_assign", {}), {
