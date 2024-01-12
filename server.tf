@@ -63,11 +63,9 @@ resource "intersight_server_profile" "map" {
   dynamic "associated_server_pool" {
     for_each = { for v in each.value.policy_bucket : v.name => v if v.object_type == "resourcepool.Pool" }
     content {
-      moid = length(regexall(false, local.moids_pools)) > 0 ? local.pools[associated_server_pool.value.org].uuid[
-        associated_server_pool.value.name
-        ] : [for i in data.intersight_search_search_item.resource[0].results : i.moid if jsondecode(
-          i.additional_properties).Organization[0].Moid == local.orgs[associated_server_pool.value.org
-      ] && jsondecode(i.additional_properties).Name == associated_server_pool.value.name][0]
+      moid = contains(lookup(lookup(local.pools, "locals", {}), "resource", []), "${associated_server_pool.value.org}/${associated_server_pool.value.name}"
+        ) == true ? local.pools.uuid["${associated_server_pool.value.org}/${associated_server_pool.value.name}"
+      ] : local.data_sources.uuid["${associated_server_pool.value.org}/${associated_server_pool.value.name}"]
       object_type = "resourcepool.Pool"
     }
   }
@@ -75,12 +73,9 @@ resource "intersight_server_profile" "map" {
     for_each = { for v in each.value.policy_bucket : v.object_type => v if length(regexall("pool", v.object_type)
     ) == 0 && each.value.create_from_template == false }
     content {
-      moid = length(regexall(false, local.moids_policies)) > 0 && length(regexall(
-        policy_bucket.value.org, each.value.organization)) > 0 ? local.policies[policy_bucket.value.org][
-        policy_bucket.value.policy][policy_bucket.value.name] : [for i in local.data_search[
-          policy_bucket.value.policy][0].results : i.moid if jsondecode(i.additional_properties
-          ).Organization.Moid == local.orgs[policy_bucket.value.org] && jsondecode(i.additional_properties
-      ).Name == policy_bucket.value.name][0]
+      moid = contains(lookup(lookup(local.policies, "locals", {}), policy_bucket.value.policy, []), "${policy_bucket.value.org}/${policy_bucket.value.name}"
+        ) == true ? local.policies[policy_bucket.value.policy]["${policy_bucket.value.org}/${policy_bucket.value.name}"
+      ] : local.data_sources[policy_bucket.value.policy]["${policy_bucket.value.org}/${policy_bucket.value.name}"]
       object_type = policy_bucket.value.object_type
     }
   }
@@ -138,11 +133,9 @@ resource "intersight_server_profile" "map" {
       ) > 0 && each.value.create_from_template == false
     }
     content {
-      moid = length(regexall(false, local.moids_pools)) > 0 ? local.pools[uuid_pool.value.org].uuid[
-        uuid_pool.value.name
-        ] : [for i in data.intersight_search_search_item.uuid[0].results : i.moid if jsondecode(
-          i.additional_properties).Organization[0].Moid == local.orgs[uuid_pool.value.org
-      ] && jsondecode(i.additional_properties).Name == uuid_pool.value.name][0]
+      moid = contains(lookup(lookup(local.pools, "locals", {}), "uuid", []), "${uuid_pool.value.org}/${uuid_pool.value.name}"
+        ) == true ? local.pools.uuid["${uuid_pool.value.org}/${uuid_pool.value.name}"
+      ] : local.data_sources.uuid["${uuid_pool.value.org}/${uuid_pool.value.name}"]
       object_type = "uuidpool.Pool"
     }
   }

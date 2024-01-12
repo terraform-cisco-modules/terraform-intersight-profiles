@@ -38,12 +38,9 @@ resource "intersight_chassis_profile" "map" {
   dynamic "policy_bucket" {
     for_each = { for v in each.value.policy_bucket : v.object_type => v }
     content {
-      moid = length(regexall(false, local.moids_policies)) > 0 && length(regexall(
-        policy_bucket.value.org, each.value.organization)) > 0 ? local.policies[policy_bucket.value.org][
-        policy_bucket.value.policy][policy_bucket.value.name] : [for i in local.data_search[
-          policy_bucket.value.policy][0].results : i.moid if jsondecode(i.additional_properties
-          ).Organization.Moid == local.orgs[policy_bucket.value.org] && jsondecode(i.additional_properties
-      ).Name == policy_bucket.value.name][0]
+      moid = contains(lookup(lookup(local.policies, "locals", {}), policy_bucket.value.policy, []), "${policy_bucket.value.org}/${policy_bucket.value.name}"
+        ) == true ? local.policies[policy_bucket.value.policy]["${policy_bucket.value.org}/${policy_bucket.value.name}"
+      ] : local.data_sources[policy_bucket.value.policy]["${policy_bucket.value.org}/${policy_bucket.value.name}"]
       object_type = policy_bucket.value.object_type
     }
   }
