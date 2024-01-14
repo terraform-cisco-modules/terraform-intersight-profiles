@@ -33,21 +33,10 @@ resource "intersight_server_profile" "map" {
   static_uuid_address = each.value.static_uuid_address
   target_platform     = each.value.target_platform
   type                = "instance"
-  uuid_address_type = length(regexall("UNUSED", each.value.uuid_pool)
-  ) == 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
-  lifecycle {
-    ignore_changes = [
-      action,
-      config_context,
-      mod_time,
-      uuid_lease,
-      wait_for_completion
-    ]
-  }
-  organization {
-    moid        = local.orgs[each.value.organization]
-    object_type = "organization.Organization"
-  }
+  uuid_address_type = length([for v in each.value.policy_bucket : v if length(regexall("pool", v.object_type)) > 0]
+  ) > 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
+  lifecycle { ignore_changes = [action, config_context, mod_time, uuid_lease, wait_for_completion] }
+  organization { moid = local.orgs[each.value.organization] }
   dynamic "assigned_server" {
     for_each = {
       for v in compact([each.value.serial_number]) : v => v if each.value.resource_pool == "UNUSED" && length(
@@ -55,9 +44,8 @@ resource "intersight_server_profile" "map" {
       ) > 0
     }
     content {
-      moid = data.intersight_compute_physical_summary.server[each.value.serial_number].results[0].moid
-      object_type = data.intersight_compute_physical_summary.server[each.value.serial_number].results[0
-      ].source_object_type
+      moid        = data.intersight_compute_physical_summary.server[each.value.serial_number].results[0].moid
+      object_type = data.intersight_compute_physical_summary.server[each.value.serial_number].results[0].source_object_type
     }
   }
   dynamic "associated_server_pool" {
@@ -71,7 +59,7 @@ resource "intersight_server_profile" "map" {
   }
   dynamic "policy_bucket" {
     for_each = { for v in each.value.policy_bucket : v.object_type => v if length(regexall("pool", v.object_type)
-    ) == 0 && each.value.create_from_template == false }
+    ) == 0 && each.value.create_from_template == false && each.value.attach_template == false }
     content {
       moid = contains(lookup(lookup(local.policies, "locals", {}), policy_bucket.value.policy, []), "${policy_bucket.value.org}/${policy_bucket.value.name}"
         ) == true ? local.policies[policy_bucket.value.policy]["${policy_bucket.value.org}/${policy_bucket.value.name}"
@@ -82,39 +70,26 @@ resource "intersight_server_profile" "map" {
   dynamic "reservation_references" {
     for_each = { for v in each.value.reservations : v.identity => v }
     content {
-      additional_properties = length(regexall("ip", v.reservation_type)
+      additional_properties = length(regexall("^(ip|mac|wwnn|wwpn)$", reservation_references.value.identity_type)
         ) > 0 ? jsonencode({
-          ConsumerType = length(regexall("IP", each.value.ip_type)
-            ) > 0 && length(regexall("Band", each.value.management_type)
-          ) > 0 ? "${each.value.management_type}${title(each.value.ip_type)}-Access" : "ISCSI"
-          ConsumerName = each.value.vnic_name
-        }) : length(regexall("mac", each.value.reservation_type)
-        ) > 0 ? jsonencode({
-          ConsumerType = "Vnic"
-          ConsumerName = each.value.vnic_name
-        }) : length(regexall("ww", each.value.reservation_type)
-        ) > 0 ? jsonencode({
-          ConsumerType = length(regexall("wwnn", each.value.reservation_type)) > 0 ? "WWNN" : "Vhba"
-          ConsumerName = each.value.vhba_name
+          ConsumerType = reservation_references.value.identity_type == "ip" && length(regexall("band", reservation_references.value.management_type)
+            ) > 0 ? "${title(lower(reservation_references.value.management_type))}${title(lower(reservation_references.value.ip_type))}-Access" : length(
+            regexall("ip", reservation_references.value.identity_type)) > 0 ? "ISCSI" : length(regexall("mac", reservation_references.value.identity_type)) > 0 ? "Vnic" : length(
+            regexall("wwnn", reservation_references.value.identity_type)
+          ) > 0 ? "WWNN" : "Vhba"
+          ConsumerName = length(regexall("band", reservation_references.value.management_type)
+          ) == 0 && reservation_references.value.identity_type != "wwnn" ? reservation_references.value.interface : ""
       }) : ""
-      object_type = length(regexall("(wwnn|wwpn)", v.reservation_type)
-      ) > 0 ? "fcpool.ReservationReference" : "${each.value.reservations_type}pool.ReservationReference"
-      reservation_moid = length(regexall("ip", v.reservation_type)
-        ) > 0 ? local.pools[each.value.organization].ip_reservations["${each.value.pool_name}:${each.value.identity}"
-        ].moid : length(regexall("iqn", v.reservation_type)
-        ) > 0 ? local.pools[each.value.organization].iqn_reservations["${each.value.pool_name}:${each.value.identity}"
-        ].moid : length(regexall("mac", v.reservation_type)
-        ) > 0 ? local.pools[each.value.organization].mac_reservations["${each.value.pool_name}:${each.value.identity}"
-        ].moid : length(regexall("uuid", v.reservation_type)
-        ) > 0 ? local.pools[each.value.organization].uuid_reservations["${each.value.pool_name}:${each.value.identity}"
-        ].moid : length(regexall("wwnn", v.reservation_type)
-        ) > 0 ? local.pools[each.value.organization].wwnn_reservations["${each.value.pool_name}:${each.value.identity}"
-      ].moid : local.pools[each.value.organization].wwpn_reservations["${each.value.pool_name}:${each.value.identity}"].moid
+      class_id    = length(regexall("^(wwnn|wwpn)$", reservation_references.value.identity_type)) > 0 ? "fcpool.ReservationReference" : "${reservation_references.value.identity_type}pool.ReservationReference"
+      object_type = length(regexall("^(wwnn|wwpn)$", reservation_references.value.identity_type)) > 0 ? "fcpool.ReservationReference" : "${reservation_references.value.identity_type}pool.ReservationReference"
+      reservation_moid = length(regexall("/", reservation_references.value.pool_name)
+        ) > 0 ? local.pools["${reservation_references.value.identity_type}_reservations"]["${reservation_references.value.pool_name}/${reservation_references.value.identity}"
+      ] : local.pools["${reservation_references.value.identity_type}_reservations"]["${each.value.organization}/${reservation_references.value.pool_name}/${reservation_references.value.identity}"]
     }
   }
   dynamic "src_template" {
-    for_each = { for v in compact([each.value.ucs_server_template]
-    ) : v => v if each.value.create_from_template == true }
+    for_each = { for v in compact([each.value.ucs_server_template]) : v => v }
+    #for_each = { for v in compact([each.value.ucs_server_template]) : v => v if each.value.create_from_template == true }
     content {
       moid        = intersight_server_profile_template.map[src_template.value].moid
       object_type = "server.ProfileTemplate"
@@ -129,13 +104,11 @@ resource "intersight_server_profile" "map" {
   }
   dynamic "uuid_pool" {
     for_each = {
-      for v in each.value.policy_bucket : v.name => v if length(regexall("uuidpool.Pool", v.object_type)
-      ) > 0 && each.value.create_from_template == false
+      for v in each.value.policy_bucket : v.name => v if length(regexall("uuidpool.Pool", v.object_type)) > 0
     }
     content {
       moid = contains(lookup(lookup(local.pools, "locals", {}), "uuid", []), "${uuid_pool.value.org}/${uuid_pool.value.name}"
-        ) == true ? local.pools.uuid["${uuid_pool.value.org}/${uuid_pool.value.name}"
-      ] : local.data_sources.uuid["${uuid_pool.value.org}/${uuid_pool.value.name}"]
+      ) == true ? local.pools.uuid["${uuid_pool.value.org}/${uuid_pool.value.name}"] : local.data_sources.uuid["${uuid_pool.value.org}/${uuid_pool.value.name}"]
       object_type = "uuidpool.Pool"
     }
   }

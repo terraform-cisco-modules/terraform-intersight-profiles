@@ -49,6 +49,7 @@ A Terraform module to configure Intersight Infrastructure Profiles.
 | [intersight_bios_policy.data](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/bios_policy) | resource |
 | [intersight_boot_precision_policy.data](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/boot_precision_policy) | resource |
 | [intersight_bulk_mo_cloner.servers_from_template](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/bulk_mo_cloner) | resource |
+| [intersight_bulk_mo_merger.trigger_profile_update](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/bulk_mo_merger) | resource |
 | [intersight_certificatemanagement_policy.data](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/certificatemanagement_policy) | resource |
 | [intersight_chassis_profile.map](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/chassis_profile) | resource |
 | [intersight_deviceconnector_policy.data](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/deviceconnector_policy) | resource |

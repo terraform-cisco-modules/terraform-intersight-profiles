@@ -21,6 +21,7 @@ profiles:
     template: ''
   server:
     action: No-op
+    attach_template: false
     create_from_template: false # If True ucs_server_profile_template must be assigned
     description: ''
     name: '**REQUIRED**'
@@ -32,9 +33,8 @@ profiles:
     resource_pool: UNUSED # If used don't assign serial number to targets
     reservations:
       ip_type: IPv4
-      management_type: OutofBand
-      vnic_name: null
-      vhba_name: null
+      management_type: Unused
+      interface: ''
     serial_number: unknown # Required if not assigned from Resource Pool.
     static_uuid_address: ''
     target_platform: FIAttached

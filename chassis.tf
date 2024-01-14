@@ -12,6 +12,10 @@ data "intersight_equipment_chassis" "chassis" {
 resource "intersight_chassis_profile" "map" {
   depends_on = [
     data.intersight_equipment_chassis.chassis,
+    intersight_access_policy.data,
+    intersight_power_policy.data,
+    intersight_snmp_policy.data,
+    intersight_thermal_policy.data
   ]
   for_each        = local.chassis
   description     = lookup(each.value, "description", "${each.value.name} Chassis Profile.")
@@ -19,21 +23,12 @@ resource "intersight_chassis_profile" "map" {
   target_platform = each.value.target_platform
   type            = "instance"
   lifecycle {
-    ignore_changes = [
-      action, additional_properties, config_context, mod_time, wait_for_completion
-    ]
+    ignore_changes = [action, additional_properties, config_context, mod_time, wait_for_completion]
   }
-  organization {
-    moid        = local.orgs[each.value.organization]
-    object_type = "organization.Organization"
-  }
+  organization { moid = local.orgs[each.value.organization] }
   dynamic "assigned_chassis" {
-    for_each = {
-      for v in compact([each.value.serial_number]) : v => v if each.value.serial_number != "unknown"
-    }
-    content {
-      moid = data.intersight_equipment_chassis.chassis[assigned_chassis.value].results[0].moid
-    }
+    for_each = { for v in compact([each.value.serial_number]) : v => v if each.value.serial_number != "unknown" }
+    content { moid = data.intersight_equipment_chassis.chassis[assigned_chassis.value].results[0].moid }
   }
   dynamic "policy_bucket" {
     for_each = { for v in each.value.policy_bucket : v.object_type => v }

@@ -20,7 +20,7 @@ output "server" {
   description = "Moid and Policies for the Server Profiles."
   value = {
     for v in sort(keys(intersight_server_profile.map)) : v => merge({ moid = intersight_server_profile.map[v].moid
-    }, { for k, v in local.server[v] : k => v if k != "targets" && v != "UNUSED" && k != "policy_bucket" })
+    }, { for k, v in local.server[v] : k => v if k != "targets" && v != "UNUSED" })
   }
 }
 
