@@ -129,6 +129,7 @@ locals {
   chassis = { for d in flatten([for org in sort(keys(var.model)) : [
     for v in lookup(lookup(var.model[org], "profiles", {}), "chassis", []) : [
       for i in v.targets : merge(local.lchassis, v, i, {
+        key          = v.name
         name         = "${local.name_prefix[org].chassis}${i.name}${local.name_suffix[org].chassis}"
         organization = org
         policy_bucket = { for e in local.bucket.chassis : replace(local.bucket[e].object_type, ".", "") => {
@@ -139,7 +140,7 @@ locals {
         } if lookup(v, e, "UNUSED") != "UNUSED" }
         tags = lookup(v, "tags", var.global_settings.tags)
       })
-  ]] if length(lookup(lookup(var.model[org], "profiles", {}), "chassis", [])) > 0]) : "${d.organization}/${d.name}" => d }
+  ]] if length(lookup(lookup(var.model[org], "profiles", {}), "chassis", [])) > 0]) : "${d.organization}/${d.key}" => d }
   chassis_serial_numbers = compact([for v in local.chassis : v.serial_number if length(regexall(
   "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0])
 
@@ -163,7 +164,7 @@ locals {
         }
         tags = lookup(v, "tags", var.global_settings.tags)
     })
-  ] if length(lookup(lookup(var.model[org], "templates", {}), "server", [])) > 0]) : "${d.organization}/${d.name}" => d }
+  ] if length(lookup(lookup(var.model[org], "templates", {}), "server", [])) > 0]) : "${d.organization}/${d.key}" => d }
 
   #_________________________________________________________________________________________
   #
@@ -171,6 +172,7 @@ locals {
   #_________________________________________________________________________________________
   servers = { for d in flatten([for org in sort(keys(var.model)) : [for v in lookup(lookup(var.model[org], "profiles", {}), "server", []) : [
     for i in v.targets : merge(local.defaults.policy_bucket, local.lserver, v, i, {
+      key          = v.name
       name         = "${local.name_prefix[org].server}${i.name}${local.name_suffix[org].server}"
       organization = org
       policy_bucket = { for e in setsubtract(local.bucket.policies, local.bucket[v.target_platform]
@@ -186,7 +188,7 @@ locals {
       ucs_server_template = length(regexall("/", lookup(v, "ucs_server_template", "UNUSED"))
       ) > 0 ? v.ucs_server_template : length(compact([lookup(v, "ucs_server_template", "")])) > 0 ? "${org}/${v.ucs_server_template}" : ""
     })
-  ]] if length(lookup(lookup(var.model[org], "profiles", {}), "server", [])) > 0]) : "${d.organization}/${d.name}" => d }
+  ]] if length(lookup(lookup(var.model[org], "profiles", {}), "server", [])) > 0]) : "${d.organization}/${d.key}" => d }
   server = { for v in local.servers : v.name => merge(v, {
     policy_bucket = length(compact([v.ucs_server_template])) > 0 ? merge(local.template[v.ucs_server_template].policy_bucket, v.policy_bucket) : v.policy_bucket
     target_platform = v.create_from_template == true && length(compact([v.ucs_server_template])
