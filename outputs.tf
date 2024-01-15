@@ -6,8 +6,8 @@
 output "chassis" {
   description = "Moid and Policies for the Chassis Profiles."
   value = {
-    for v in sort(keys(intersight_chassis_profile.map)) : v => merge({ moid = intersight_chassis_profile.map[v].moid
-    }, { for k, v in local.chassis[v] : k => v if k != "targets" && v != "UNUSED" && k != "policy_bucket" })
+    for e in sort(keys(intersight_chassis_profile.map)) : e => merge({ moid = intersight_chassis_profile.map[e].moid
+    }, { for k, v in local.chassis[e] : k => v if k != "targets" && v != "UNUSED" && k != "policy_bucket" })
   }
 }
 
@@ -19,8 +19,8 @@ output "chassis" {
 output "server" {
   description = "Moid and Policies for the Server Profiles."
   value = {
-    for v in sort(keys(intersight_server_profile.map)) : v => merge({ moid = intersight_server_profile.map[v].moid
-    }, { for k, v in local.server[v] : k => v if k != "targets" && v != "UNUSED" })
+    for e in sort(keys(intersight_server_profile.map)) : e => merge({ moid = intersight_server_profile.map[e].moid
+    }, { for k, v in local.server[e] : k => v if k != "targets" && v != "UNUSED" })
   }
 }
 
@@ -32,13 +32,13 @@ output "server" {
 output "template" {
   description = "Moid and Policies for the Server Profile Templates."
   value = {
-    for v in sort(keys(intersight_server_profile_template.map)) : v => merge({
-      moid = intersight_server_profile_template.map[v].moid
-    }, { for k, v in local.template[v] : k => v if v != "UNUSED" && k != "policy_bucket" })
+    for e in sort(keys(intersight_server_profile_template.map)) : e => merge({
+      moid = intersight_server_profile_template.map[e].moid
+    }, { for k, v in local.template[e] : k => v if v != "UNUSED" && k != "policy_bucket" })
   }
 }
 
-output "z_moids_of_policies_that_were_referenced_in_the_domain_profile_but_not_already_created" {
+output "z_moids_of_policies_that_were_referenced_in_the_profiles_but_not_already_created" {
   description = "moids of Pools that were referenced in server profiles but not defined"
   value = lookup(var.global_settings, "debugging", false) == true ? {
     adapter_configuration  = { for v in sort(keys(intersight_adapter_config_policy.data)) : v => intersight_adapter_config_policy.data[v].moid }

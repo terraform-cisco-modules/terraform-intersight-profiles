@@ -39,7 +39,7 @@ A Terraform module to configure Intersight Infrastructure Profiles.
 | <a name="output_chassis"></a> [chassis](#output\_chassis) | Moid and Policies for the Chassis Profiles. |
 | <a name="output_server"></a> [server](#output\_server) | Moid and Policies for the Server Profiles. |
 | <a name="output_template"></a> [template](#output\_template) | Moid and Policies for the Server Profile Templates. |
-| <a name="output_z_moids_of_policies_that_were_referenced_in_the_domain_profile_but_not_already_created"></a> [z\_moids\_of\_policies\_that\_were\_referenced\_in\_the\_domain\_profile\_but\_not\_already\_created](#output\_z\_moids\_of\_policies\_that\_were\_referenced\_in\_the\_domain\_profile\_but\_not\_already\_created) | moids of Pools that were referenced in server profiles but not defined |
+| <a name="output_z_moids_of_policies_that_were_referenced_in_the_profiles_but_not_already_created"></a> [z\_moids\_of\_policies\_that\_were\_referenced\_in\_the\_profiles\_but\_not\_already\_created](#output\_z\_moids\_of\_policies\_that\_were\_referenced\_in\_the\_profiles\_but\_not\_already\_created) | moids of Pools that were referenced in server profiles but not defined |
 ## Resources
 
 | Name | Type |
