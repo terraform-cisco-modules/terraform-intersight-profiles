@@ -191,7 +191,7 @@ locals {
   ]] if length(lookup(lookup(var.model[org], "profiles", {}), "server", [])) > 0]) : "${d.organization}/${d.key}" => d }
   server = { for k, v in local.servers : k => merge(v, {
     policy_bucket = length(compact([v.ucs_server_template])) > 0 ? merge(local.template[v.ucs_server_template].policy_bucket, v.policy_bucket) : v.policy_bucket
-    target_platform = v.create_from_template == true && length(compact([v.ucs_server_template])
+    target_platform = v.attach_template == true && length(compact([v.ucs_server_template])
     ) > 0 ? local.template[v.ucs_server_template].target_platform : v.target_platform
   }) }
   server_serial_numbers = compact([for v in local.server : v.serial_number if length(regexall(

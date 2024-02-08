@@ -68,23 +68,9 @@ resource "intersight_server_profile_template" "map" {
   }
 }
 
-resource "intersight_bulk_mo_cloner" "servers_from_template" {
-  depends_on = [intersight_server_profile_template.map]
-  for_each   = { for k, v in local.server : k => v if v.create_from_template == true && length(v.reservations) == 0 }
-  lifecycle { ignore_changes = all } # This is required for this resource type
-  sources {
-    object_type = intersight_server_profile_template.map[each.value.ucs_server_template].object_type
-    moid        = intersight_server_profile_template.map[each.value.ucs_server_template].moid
-  }
-  targets {
-    object_type           = "server.Profile"
-    additional_properties = jsonencode({ Name = each.key })
-  }
-}
-
 resource "intersight_bulk_mo_merger" "trigger_profile_update" {
   depends_on   = [intersight_server_profile.map]
-  for_each     = { for k, v in local.server : k => v if v.attach_template == true && v.create_from_template == false }
+  for_each     = { for k, v in local.server : k => v if v.attach_template == true }
   merge_action = "Merge"
   lifecycle { ignore_changes = all }
   sources {

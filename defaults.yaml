@@ -22,7 +22,6 @@ profiles:
   server:
     action: No-op
     attach_template: false
-    create_from_template: false # If True ucs_server_profile_template must be assigned
     description: ''
     name: '**REQUIRED**'
     pre_assign:

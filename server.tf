@@ -12,8 +12,7 @@ data "intersight_compute_physical_summary" "server" {
 resource "intersight_server_profile" "map" {
   depends_on = [
     data.intersight_compute_physical_summary.server,
-    intersight_server_profile_template.map,
-    intersight_bulk_mo_cloner.servers_from_template
+    intersight_server_profile_template.map
   ]
   for_each    = { for k, v in local.server : k => v }
   description = lookup(each.value, "description", "${each.value.name} Server Profile.")
@@ -59,7 +58,7 @@ resource "intersight_server_profile" "map" {
   }
   dynamic "policy_bucket" {
     for_each = { for v in each.value.policy_bucket : v.object_type => v if length(regexall("pool", v.object_type)
-    ) == 0 && each.value.create_from_template == false && each.value.attach_template == false }
+    ) == 0 && each.value.attach_template == false }
     content {
       moid = contains(lookup(lookup(local.policies, "locals", {}), policy_bucket.value.policy, []), "${policy_bucket.value.org}/${policy_bucket.value.name}"
         ) == true ? local.policies[policy_bucket.value.policy]["${policy_bucket.value.org}/${policy_bucket.value.name}"
@@ -88,13 +87,17 @@ resource "intersight_server_profile" "map" {
     }
   }
   dynamic "src_template" {
-    for_each = { for v in compact([each.value.ucs_server_template]) : v => v }
-    #for_each = { for v in compact([each.value.ucs_server_template]) : v => v if each.value.create_from_template == true }
+    for_each = { for v in compact([each.value.ucs_server_template]) : v => v if each.value.attach_template == true }
     content {
       moid        = intersight_server_profile_template.map[src_template.value].moid
       object_type = "server.ProfileTemplate"
     }
   }
+  #dynamic "src_template" {
+  #  for_each = { for v in compact([each.value.ucs_server_template]) : v => v if each.value.attach_template == false && each.value.create_from_template == false }
+  #  content { }
+  #}
+  #src_template {}
   dynamic "tags" {
     for_each = { for v in each.value.tags : v.key => v }
     content {
