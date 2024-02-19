@@ -74,8 +74,7 @@ locals {
     ]
     drive_security_policy = { object_type = "storage.DriveSecurityPolicy", policy = "drive_security", }
     FIAttached = [
-      "device_connector_policy", "ldap_policy", "network_connectivity_policy", "ntp_policy",
-      "persistent_memory_policy", "thermal_policy"
+      "device_connector_policy", "ldap_policy", "network_connectivity_policy", "ntp_policy", "persistent_memory_policy"
     ]
     firmware_policy             = { object_type = "firmware.Policy", policy = "firmware", }
     imc_access_policy           = { object_type = "access.Policy", policy = "imc_access", }
@@ -103,7 +102,7 @@ locals {
     smtp_policy             = { object_type = "smtp.Policy", policy = "smtp", }
     snmp_policy             = { object_type = "snmp.Policy", policy = "snmp", }
     ssh_policy              = { object_type = "ssh.Policy", policy = "ssh", }
-    Standalone              = ["imc_access_poicy", "power_policy", "resource_pool", "thermal_policy", "uuid_pool"]
+    Standalone              = ["imc_access_poicy", "power_policy", "resource_pool", "uuid_pool"]
     storage_policy          = { object_type = "storage.StoragePolicy", policy = "storage", }
     switch_control_policy   = { object_type = "fabric.SwitchControlPolicy", policy = "switch_control", }
     syslog_policy           = { object_type = "syslog.Policy", policy = "syslog", }
@@ -125,7 +124,7 @@ locals {
       key          = v.name
       name         = "${local.name_prefix[org].domain}${v.name}${local.name_suffix[org].domain}"
       organization = org
-      tags         = lookup(v, "tags", local.global_settings.tags)
+      tags         = lookup(v, "tags", var.global_settings.tags)
     })
   ] if length(lookup(lookup(var.model[org], "profiles", {}), "domain", [])) > 0]) : "${d.organization}/${d.key}" => d }
   switch_profiles = { for i in flatten([
@@ -135,14 +134,14 @@ locals {
         name           = s == 0 ? "${v.name}-A" : "${v.name}-B"
         organization   = v.organization
         policy_bucket = merge({
-          for e in local.bucket.policies : replace(local.bucket[e].object_type, ".", "") => {
+          for e in local.bucket.domain_policies : replace(local.bucket[e].object_type, ".", "") => {
             name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 1) : lookup(v, e, "UNUSED")
             object_type = local.bucket[e].object_type
             org         = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 0) : v.organization
             policy      = local.bucket[e].policy
           } if lookup(v, e, "UNUSED") != "UNUSED"
           }, {
-          for e in local.bucket.dual_policies : local.bucket[e].policy => {
+          for e in local.bucket.domain_dual_policies : local.bucket[e].policy => {
             name = length(
               lookup(v, e, [])) > 1 ? [length(regexall("/", v[e][s])) > 0 ? element(split("/", v[e][s]), 1) : v[e][s]][0] : length(
               lookup(v, e, [])) > 0 ? [length(regexall("/", v[e][0])) > 0 ? element(split("/", v[e][0]), 1) : v[e][0]][0

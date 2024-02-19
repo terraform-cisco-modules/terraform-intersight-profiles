@@ -76,12 +76,12 @@ resource "intersight_fabric_switch_profile" "map" {
 
 #_________________________________________________________________________________________
 #
-# Sleep Timer between Deploying the Domain and Waiting for Server Discovery
+# Sleep Timer between creating domain profile and waiting for Validation
 #_________________________________________________________________________________________
-resource "time_sleep" "map" {
+resource "time_sleep" "domain" {
   depends_on      = [intersight_fabric_switch_profile.map]
-  for_each        = { for v in ["wait_for_server_discovery"] : v => v if length(local.switch_profiles) > 0 }
-  create_duration = length([for k, v in local.switch_profiles : 1 if v.action == "Deploy"]) > 0 ? "3m" : "1s"
+  for_each        = { for v in ["wait_for_validation_2m"] : v => v if length(local.switch_profiles) > 0 }
+  create_duration = length([for k, v in local.switch_profiles : 1 if v.action == "Deploy"]) > 0 ? "2m" : "1s"
   triggers        = { always_run = length(local.wait_for_domain) > 0 ? timestamp() : 1 }
 }
 
@@ -91,7 +91,7 @@ resource "time_sleep" "map" {
 # GUI Location: Infrastructure Service > Configure > Profiles : UCS Domain Profiles
 #_________________________________________________________________________________________
 resource "intersight_fabric_switch_profile" "deploy" {
-  depends_on = [intersight_fabric_switch_profile.map]
+  depends_on = [time_sleep.domain]
   for_each   = { for k, v in local.switch_profiles : k => v }
   action = length(regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
   ) > 0 ? each.value.action : "No-op"
@@ -102,7 +102,7 @@ resource "intersight_fabric_switch_profile" "deploy" {
     ]
   }
   name = each.value.name
-  switch_cluster_profile { moid = each.value.domain_moid }
+  switch_cluster_profile { moid = intersight_fabric_switch_cluster_profile.map[each.value.domain_profile].moid }
   wait_for_completion = local.switch_profiles[element(keys(local.switch_profiles), length(keys(local.switch_profiles)) - 1)
   ].name == each.value.name ? true : false
 }
@@ -111,9 +111,9 @@ resource "intersight_fabric_switch_profile" "deploy" {
 #
 # Sleep Timer between Deploying the Domain and Waiting for Server Discovery
 #_________________________________________________________________________________________
-resource "time_sleep" "deploy" {
+resource "time_sleep" "discovery" {
   depends_on      = [intersight_fabric_switch_profile.deploy]
-  for_each        = { for v in ["wait_for_server_discovery"] : v => v if length(local.switch_profiles) > 0 }
+  for_each        = { for v in ["wait_time_30min"] : v => v if length(local.switch_profiles) > 0 }
   create_duration = length([for k, v in local.switch_profiles : 1 if v.action == "Deploy"]) > 0 ? "30m" : "1s"
   triggers        = { always_run = length(local.wait_for_domain) > 0 ? timestamp() : 1 }
 }

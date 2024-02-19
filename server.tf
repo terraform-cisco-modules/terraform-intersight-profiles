@@ -12,7 +12,8 @@ data "intersight_compute_physical_summary" "server" {
 resource "intersight_server_profile" "map" {
   depends_on = [
     data.intersight_compute_physical_summary.server,
-    intersight_server_profile_template.map
+    intersight_server_profile_template.map,
+    time_sleep.discovery
   ]
   for_each    = { for k, v in local.server : k => v }
   description = lookup(each.value, "description", "${each.value.name} Server Profile.")
@@ -34,7 +35,7 @@ resource "intersight_server_profile" "map" {
   type                = "instance"
   uuid_address_type = length([for v in each.value.policy_bucket : v if length(regexall("pool", v.object_type)) > 0]
   ) > 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
-  lifecycle { ignore_changes = [action, config_context, mod_time, uuid_lease, wait_for_completion] }
+  lifecycle { ignore_changes = [action, config_context, mod_time, uuid_lease, scheduled_actions, wait_for_completion] }
   organization { moid = var.orgs[each.value.organization] }
   dynamic "assigned_server" {
     for_each = {
@@ -124,15 +125,35 @@ resource "intersight_server_profile" "map" {
 
 #_________________________________________________________________________________________
 #
+# Sleep Timer between creating server profile and waiting for Validation
+#_________________________________________________________________________________________
+resource "time_sleep" "server" {
+  depends_on      = [intersight_bulk_mo_merger.trigger_profile_update]
+  for_each        = { for v in ["wait_for_validation_2m"] : v => v if length(local.switch_profiles) > 0 }
+  create_duration = length([for k, v in local.switch_profiles : 1 if v.action == "Deploy"]) > 0 ? "2m" : "1s"
+  triggers        = { always_run = length(local.wait_for_domain) > 0 ? timestamp() : 1 }
+}
+
+#_________________________________________________________________________________________
+#
 # Intersight: UCS Server Profiles
 # GUI Location: Infrastructure Service > Configure > Profiles : UCS Server Profiles
 #_________________________________________________________________________________________
 resource "intersight_server_profile" "deploy" {
-  depends_on = [intersight_bulk_mo_merger.trigger_profile_update]
+  depends_on = [time_sleep.server]
   for_each   = local.server
   action = length(regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
   ) > 0 ? each.value.action : "No-op"
   target_platform = each.value.target_platform
+  dynamic "scheduled_actions" {
+    for_each = { for v in ["activate"] : v => v if length(regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
+    ) > 0 && each.value.action == "Deploy" }
+    content {
+      action            = "Activate"
+      object_type       = "policy.ScheduledAction"
+      proceed_on_reboot = true
+    }
+  }
   lifecycle { ignore_changes = [
     action_params, ancestors, assigned_server, associated_server, associated_server_pool, create_time, description, domain_group_moid,
     mod_time, owners, parent, permission_resources, policy_bucket, reservation_references, running_workflows, server_assignment_mode,
