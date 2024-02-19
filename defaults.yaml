@@ -9,13 +9,40 @@ profiles:
     snmp_policy: UNUSED
     thermal_policy: UNUSED
     target_platform: FIAttached
+  domain:
+    action: No-op
+    description: ''
+    name: '**REQUIRED**'
+    tags: # Optional List of Map of String
+      key: ''
+      value: ''
+    #===========================
+    # VLAN & VSAN Configuration
+    #===========================
+    vlan_policies: [] # It can be a list of 1 to share the same vlan policy or list of 2 for different per FI
+    vsan_policies: [] # List of two VSAN Policies.  One for each Fabric
+    #===========================
+    # Ports Configuration
+    #===========================
+    port_policies: [] # List of two Port Policies.  One for each Fabric
+    #===========================
+    # UCS Domain Configuration
+    #===========================
+    network_connectivity_policy: UNUSED
+    ntp_policy: UNUSED
+    snmp_policy: UNUSED
+    switch_control_policy: UNUSED
+    syslog_policy: UNUSED
+    system_qos_policy: UNUSED
   name_prefix:
     default: ''
     chassis: ''
+    domain: ''
     server: ''
     template: ''
   name_suffix:
     default: ''
+    domain: ''
     chassis: ''
     server: ''
     template: ''

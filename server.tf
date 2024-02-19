@@ -121,3 +121,25 @@ resource "intersight_server_profile" "map" {
     }
   }
 }
+
+#_________________________________________________________________________________________
+#
+# Intersight: UCS Server Profiles
+# GUI Location: Infrastructure Service > Configure > Profiles : UCS Server Profiles
+#_________________________________________________________________________________________
+resource "intersight_server_profile" "deploy" {
+  depends_on = [intersight_bulk_mo_merger.trigger_profile_update]
+  for_each   = local.server
+  action = length(regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
+  ) > 0 ? each.value.action : "No-op"
+  target_platform = each.value.target_platform
+  lifecycle { ignore_changes = [
+    action_params, ancestors, assigned_server, associated_server, associated_server_pool, create_time, description, domain_group_moid,
+    mod_time, owners, parent, permission_resources, policy_bucket, reservation_references, running_workflows, server_assignment_mode,
+    server_pool, shared_scope, src_template, tags, target_platform, uuid, uuid_address_type, uuid_lease, uuid_pool, version_context
+  ] }
+  name = each.value.name
+  uuid_address_type = length([for v in each.value.policy_bucket : v if length(regexall("pool", v.object_type)) > 0]
+  ) > 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
+  organization { moid = var.orgs[each.value.organization] }
+}

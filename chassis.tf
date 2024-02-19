@@ -15,7 +15,9 @@ resource "intersight_chassis_profile" "map" {
     data.intersight_search_search_item.policies,
     data.intersight_search_search_item.pools,
   ]
-  for_each        = local.chassis
+  for_each = local.chassis
+  action = length(regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
+  ) > 0 ? each.value.action : "No-op"
   description     = lookup(each.value, "description", "${each.value.name} Chassis Profile.")
   name            = each.value.name
   target_platform = each.value.target_platform
@@ -47,3 +49,22 @@ resource "intersight_chassis_profile" "map" {
     }
   }
 }
+
+##_________________________________________________________________________________________
+##
+## Intersight: UCS Chassis Profiles
+## GUI Location: Infrastructure Service > Configure > Profiles : UCS Chassis Profiles
+##_________________________________________________________________________________________
+#resource "intersight_chassis_profile" "deploy" {
+#  depends_on = [intersight_chassis_profile.map]
+#  for_each   = local.chassis
+#  action = length(regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)
+#  ) > 0 ? each.value.action : "No-op"
+#  lifecycle { ignore_changes = [
+#    action_params, ancestors, create_time, description, domain_group_moid, mod_time, owners, parent,
+#    permission_resources, policy_bucket, running_workflows, shared_scope, src_template, tags, version_context
+#  ] }
+#  name            = each.value.name
+#  target_platform = each.value.target_platform
+#  organization { moid = var.orgs[each.value.organization] }
+#}

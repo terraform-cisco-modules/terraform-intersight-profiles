@@ -1,6 +1,7 @@
 locals {
   defaults  = yamldecode(file("${path.module}/defaults.yaml"))
   lchassis  = local.defaults.profiles.chassis
+  ldomain   = local.defaults.profiles.domain
   lserver   = local.defaults.profiles.server
   ltemplate = local.defaults.templates.server
 
@@ -17,21 +18,34 @@ locals {
   org_moids     = { for k, v in var.orgs : v => k }
   policies      = lookup(var.policies, "map", {})
   pools         = lookup(var.pools, "map", {})
-  profile_names = ["chassis", "server", "template"]
+  profile_names = ["chassis", "domain", "server", "template"]
 
   #_________________________________________________________________________________________
   #
   # Get Policy Names from Profiles and Templates
   #_________________________________________________________________________________________
 
-  pb = { for i in local.bucket.policies : trimsuffix(trimsuffix(i, "_policy"), "_pool") => setsubtract(distinct(compact(concat(
+  pb = merge({ for i in local.bucket.policies : trimsuffix(trimsuffix(i, "_policy"), "_pool") => setsubtract(distinct(compact(concat(
     [for e in local.chassis : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]],
     [for e in local.server : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]],
     [for e in local.template : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]]
-  ))), ["UNUSED"]) }
-  policy_types  = [for e in keys(local.pb) : e if length(regexall("resource|uuid", e)) == 0]
-  data_policies = { for e in local.policy_types : e => [for v in local.pb[e] : element(split("/", v), 1) if contains(keys(lookup(local.policies, e, {})), v) == false] }
-  data_pools    = { for e in ["resource", "uuid"] : e => [for v in local.pb[e] : element(split("/", v), 1) if contains(keys(lookup(local.pools, e, {})), v) == false] }
+    ))), ["UNUSED"]) },
+    { for i in local.bucket.domain_policies : trimsuffix(i, "_policy") => setsubtract(distinct(compact(
+      [for e in local.switch_profiles : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])
+      ) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]]
+    )), ["UNUSED"]) },
+    { for i in local.bucket.domain_dual_policies : trimsuffix(i, "_policies") => setsubtract(distinct(compact(
+      flatten([for e in local.switch_profiles : [
+        for d in range(length(lookup(e, i, []))) : [d != "UNUSED" ? length(regexall("/", e[i][d])) > 0 ? e[i][d
+        ] : "${e.organization}/${e[i][d]}" : "UNUSED"][0]
+      ]])
+    )), ["UNUSED"]) }
+  )
+  policy_types = [for e in keys(local.pb) : e if length(regexall("resource|uuid", e)) == 0]
+  data_policies = { for e in local.policy_types : e => [for v in local.pb[e] : element(split("/", v), 1
+  ) if contains(keys(lookup(local.policies, e, {})), v) == false] }
+  data_pools = { for e in ["resource", "uuid"] : e => [for v in local.pb[e] : element(split("/", v), 1
+  ) if contains(keys(lookup(local.pools, e, {})), v) == false] }
 
   #_________________________________________________________________________________________
   #
@@ -45,7 +59,20 @@ locals {
     certificate_management_policy = { object_type = "certificatemanagement.Policy", policy = "certificate_management", }
     chassis                       = ["imc_access_policy", "power_policy", "snmp_policy", "thermal_policy", ]
     device_connector_policy       = { object_type = "deviceconnector.Policy", policy = "device_connector", }
-    drive_security_policy         = { object_type = "storage.DriveSecurityPolicy", policy = "drive_security", }
+    domain_dual_policies = [
+      "port_policies",
+      "vlan_policies",
+      "vsan_policies",
+    ]
+    domain_policies = [
+      "network_connectivity_policy",
+      "ntp_policy",
+      "snmp_policy",
+      "switch_control_policy",
+      "syslog_policy",
+      "system_qos_policy",
+    ]
+    drive_security_policy = { object_type = "storage.DriveSecurityPolicy", policy = "drive_security", }
     FIAttached = [
       "device_connector_policy", "ldap_policy", "network_connectivity_policy", "ntp_policy",
       "persistent_memory_policy", "thermal_policy"
@@ -67,6 +94,7 @@ locals {
       "san_connectivity_policy", "sd_card_policy", "serial_over_lan_policy", "smtp_policy", "snmp_policy", "ssh_policy",
       "storage_policy", "syslog_policy", "thermal_policy", "uuid_pool", "virtual_kvm_policy", "virtual_media_policy",
     ]
+    port_policies           = { object_type = "fabric.PortPolicy", policy = "port", }
     power_policy            = { object_type = "power.Policy", policy = "power", }
     resource_pool           = { object_type = "resourcepool.Pool", policy = "resource", }
     san_connectivity_policy = { object_type = "vnic.SanConnectivityPolicy", policy = "san_connectivity", }
@@ -77,12 +105,64 @@ locals {
     ssh_policy              = { object_type = "ssh.Policy", policy = "ssh", }
     Standalone              = ["imc_access_poicy", "power_policy", "resource_pool", "thermal_policy", "uuid_pool"]
     storage_policy          = { object_type = "storage.StoragePolicy", policy = "storage", }
+    switch_control_policy   = { object_type = "fabric.SwitchControlPolicy", policy = "switch_control", }
     syslog_policy           = { object_type = "syslog.Policy", policy = "syslog", }
+    system_qos_policy       = { object_type = "fabric.SystemQosPolicy", policy = "system_qos", }
     thermal_policy          = { object_type = "thermal.Policy", policy = "thermal", }
     uuid_pool               = { object_type = "uuidpool.Pool", policy = "uuid", }
     virtual_kvm_policy      = { object_type = "kvm.Policy", policy = "virtual_kvm", }
     virtual_media_policy    = { object_type = "vmedia.Policy", policy = "virtual_media", }
+    vlan_policies           = { object_type = "fabric.EthNetworkPolicy", policy = "vlan", }
+    vsan_policies           = { object_type = "fabric.FcNetworkPolicy", policy = "vsan", }
   }
+
+  #_________________________________________________________________________________________
+  #
+  # Domain Profiles
+  #_________________________________________________________________________________________
+  domain = { for d in flatten([for org in sort(keys(var.model)) : [
+    for v in lookup(lookup(var.model[org], "profiles", {}), "domain", []) : merge(local.ldomain, v, {
+      key          = v.name
+      name         = "${local.name_prefix[org].domain}${v.name}${local.name_suffix[org].domain}"
+      organization = org
+      tags         = lookup(v, "tags", local.global_settings.tags)
+    })
+  ] if length(lookup(lookup(var.model[org], "profiles", {}), "domain", [])) > 0]) : "${d.organization}/${d.key}" => d }
+  switch_profiles = { for i in flatten([
+    for k, v in local.domain : [
+      for s in [0, 1] : merge(v, {
+        domain_profile = k
+        name           = s == 0 ? "${v.name}-A" : "${v.name}-B"
+        organization   = v.organization
+        policy_bucket = merge({
+          for e in local.bucket.policies : replace(local.bucket[e].object_type, ".", "") => {
+            name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 1) : lookup(v, e, "UNUSED")
+            object_type = local.bucket[e].object_type
+            org         = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 0) : v.organization
+            policy      = local.bucket[e].policy
+          } if lookup(v, e, "UNUSED") != "UNUSED"
+          }, {
+          for e in local.bucket.dual_policies : local.bucket[e].policy => {
+            name = length(
+              lookup(v, e, [])) > 1 ? [length(regexall("/", v[e][s])) > 0 ? element(split("/", v[e][s]), 1) : v[e][s]][0] : length(
+              lookup(v, e, [])) > 0 ? [length(regexall("/", v[e][0])) > 0 ? element(split("/", v[e][0]), 1) : v[e][0]][0
+            ] : "UNUSED"
+            object_type = local.bucket[e].object_type
+            org = length(
+              lookup(v, e, [])) > 1 ? [length(regexall("/", v[e][s])) > 0 ? element(split("/", v[e][s]), 0) : v.organization][0] : length(
+              lookup(v, e, [])) > 0 ? [length(regexall("/", v[e][0])) > 0 ? element(split("/", v[e][0]), 0) : v.organization][0
+            ] : v.organization
+            policy = local.bucket[e].policy
+          }
+        })
+        serial_number = length(lookup(v, "serial_numbers", [])) == 2 ? element(v.serial_numbers, s) : length(lookup(v, "serial_numbers", [])
+        ) == 1 ? element(v.serial_numbers, 0) : "unknown"
+      })
+    ]
+  ]) : "${i.organization}/${i.name}" => i }
+  domain_serial_numbers = compact(flatten([for v in local.switch_profiles : v.serial_number if length(regexall(
+  "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0]))
+  wait_for_domain = distinct(compact([for i in local.switch_profiles : i.action if i.action != "No-op"]))
 
   #_________________________________________________________________________________________
   #
@@ -145,15 +225,17 @@ locals {
         org         = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 0) : org
         policy      = local.bucket[e].policy
       } if lookup(v, e, "UNUSED") != "UNUSED" }
-      pre_assign   = merge(local.lserver.pre_assign, lookup(i, "pre_assign", {}), { domain_name = lookup(v, "domain_name", "") })
-      reservations = lookup(v, "ignore_reservations", true) == false ? [for e in lookup(i, "reservations", []) : merge(local.lserver.reservations, e)] : []
-      tags         = lookup(v, "tags", var.global_settings.tags)
+      pre_assign = merge(local.lserver.pre_assign, lookup(i, "pre_assign", {}), { domain_name = lookup(v, "domain_name", "") })
+      reservations = lookup(v, "ignore_reservations", true
+      ) == false ? [for e in lookup(i, "reservations", []) : merge(local.lserver.reservations, e)] : []
+      tags = lookup(v, "tags", var.global_settings.tags)
       ucs_server_template = length(regexall("/", lookup(v, "ucs_server_template", "UNUSED"))
       ) > 0 ? v.ucs_server_template : length(compact([lookup(v, "ucs_server_template", "")])) > 0 ? "${org}/${v.ucs_server_template}" : ""
     })
   ]] if length(lookup(lookup(var.model[org], "profiles", {}), "server", [])) > 0]) : "${d.organization}/${d.key}" => d }
   server = { for k, v in local.servers : k => merge(v, {
-    policy_bucket = length(compact([v.ucs_server_template])) > 0 ? merge(local.template[v.ucs_server_template].policy_bucket, v.policy_bucket) : v.policy_bucket
+    policy_bucket = length(compact([v.ucs_server_template])) > 0 ? merge(local.template[v.ucs_server_template].policy_bucket, v.policy_bucket
+    ) : v.policy_bucket
     target_platform = v.attach_template == true && length(compact([v.ucs_server_template])
     ) > 0 ? local.template[v.ucs_server_template].target_platform : v.target_platform
   }) }

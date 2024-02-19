@@ -10,6 +10,10 @@ terraform {
       source  = "CiscoDevNet/intersight"
       version = ">=1.0.37"
     }
+    time = {
+      source  = "time"
+      version = ">=0.9.1"
+    }
   }
   required_version = ">=1.3.0"
 }
