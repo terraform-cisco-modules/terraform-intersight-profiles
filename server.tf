@@ -60,7 +60,7 @@ resource "intersight_server_profile" "map" {
   }
   dynamic "policy_bucket" {
     for_each = { for v in each.value.policy_bucket : v.object_type => v if length(regexall("pool", v.object_type)
-    ) == 0 && each.value.attach_template == false }
+    ) == 0 && each.value.attach_template == false && v.name != "UNUSED" }
     content {
       moid = contains(keys(lookup(local.policies, policy_bucket.value.policy, {})), "${policy_bucket.value.org}/${policy_bucket.value.name}"
         ) == true ? local.policies[policy_bucket.value.policy]["${policy_bucket.value.org}/${policy_bucket.value.name}"

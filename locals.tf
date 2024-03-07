@@ -94,6 +94,7 @@ locals {
       "storage_policy", "syslog_policy", "thermal_policy", "uuid_pool", "virtual_kvm_policy", "virtual_media_policy",
     ]
     port_policies           = { object_type = "fabric.PortPolicy", policy = "port", }
+    port_policy             = { object_type = "fabric.PortPolicy", policy = "port", }
     power_policy            = { object_type = "power.Policy", policy = "power", }
     resource_pool           = { object_type = "resourcepool.Pool", policy = "resource", }
     san_connectivity_policy = { object_type = "vnic.SanConnectivityPolicy", policy = "san_connectivity", }
@@ -112,7 +113,9 @@ locals {
     virtual_kvm_policy      = { object_type = "kvm.Policy", policy = "virtual_kvm", }
     virtual_media_policy    = { object_type = "vmedia.Policy", policy = "virtual_media", }
     vlan_policies           = { object_type = "fabric.EthNetworkPolicy", policy = "vlan", }
+    vlan_policy             = { object_type = "fabric.EthNetworkPolicy", policy = "vlan", }
     vsan_policies           = { object_type = "fabric.FcNetworkPolicy", policy = "vsan", }
+    vsan_policy             = { object_type = "fabric.FcNetworkPolicy", policy = "vsan", }
   }
 
   #_________________________________________________________________________________________

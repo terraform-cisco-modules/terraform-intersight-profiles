@@ -30,7 +30,7 @@ resource "intersight_chassis_profile" "map" {
     content { moid = data.intersight_equipment_chassis.chassis[assigned_chassis.value].results[0].moid }
   }
   dynamic "policy_bucket" {
-    for_each = { for v in each.value.policy_bucket : v.object_type => v }
+    for_each = { for v in each.value.policy_bucket : v.object_type => v if v.name != "UNUSED" }
     content {
       moid = contains(keys(lookup(local.policies, policy_bucket.value.policy, {})), "${policy_bucket.value.org}/${policy_bucket.value.name}"
         ) == true ? local.policies[policy_bucket.value.policy]["${policy_bucket.value.org}/${policy_bucket.value.name}"

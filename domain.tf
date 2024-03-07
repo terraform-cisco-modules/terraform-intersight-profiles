@@ -53,7 +53,7 @@ resource "intersight_fabric_switch_profile" "map" {
   # the following policy_bucket statements map different policies to this
   # template -- the object_type shows the policy type
   dynamic "policy_bucket" {
-    for_each = { for k, v in each.value.policy_bucket : v.object_type => v }
+    for_each = { for k, v in each.value.policy_bucket : v.object_type => v if v.name != "UNUSED" }
     content {
       moid = contains(keys(lookup(local.policies, policy_bucket.value.policy, {})), "${policy_bucket.value.org}/${policy_bucket.value.name}"
         ) == true ? local.policies[policy_bucket.value.policy]["${policy_bucket.value.org}/${policy_bucket.value.name}"

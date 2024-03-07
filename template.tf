@@ -16,7 +16,7 @@ resource "intersight_server_profile_template" "map" {
   lifecycle { ignore_changes = [action, config_context, description, mod_time] }
   organization { moid = var.orgs[each.value.organization] }
   dynamic "policy_bucket" {
-    for_each = { for v in each.value.policy_bucket : v.object_type => v if length(regexall("pool", v.object_type)) == 0 }
+    for_each = { for v in each.value.policy_bucket : v.object_type => v if length(regexall("pool", v.object_type)) == 0 && v.name != "UNUSED" }
     content {
       moid = contains(keys(lookup(local.policies, policy_bucket.value.policy, {})), "${policy_bucket.value.org}/${policy_bucket.value.name}"
         ) == true ? local.policies[policy_bucket.value.policy]["${policy_bucket.value.org}/${policy_bucket.value.name}"
