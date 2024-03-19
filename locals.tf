@@ -163,7 +163,7 @@ locals {
     ]
   ]) : "${i.organization}/${i.name}" => i }
   domain_serial_numbers = compact(flatten([for v in local.switch_profiles : v.serial_number if length(regexall(
-  "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0]))
+  "^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0]))
   wait_for_domain = distinct(compact([for i in local.switch_profiles : i.action if i.action != "No-op"]))
 
   #_________________________________________________________________________________________
@@ -187,7 +187,7 @@ locals {
       })
   ]] if length(lookup(lookup(var.model[org], "profiles", {}), "chassis", [])) > 0]) : "${d.organization}/${d.key}" => d }
   chassis_serial_numbers = compact([for v in local.chassis : v.serial_number if length(regexall(
-  "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0])
+  "^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0])
 
   #_________________________________________________________________________________________
   #
@@ -242,5 +242,5 @@ locals {
     ) > 0 ? local.template[v.ucs_server_template].target_platform : v.target_platform
   }) }
   server_serial_numbers = compact([for v in local.server : v.serial_number if length(regexall(
-  "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0])
+  "^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0])
 }

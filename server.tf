@@ -19,7 +19,7 @@ resource "intersight_server_profile" "map" {
   description = lookup(each.value, "description", "${each.value.name} Server Profile.")
   name        = each.value.name
   server_assignment_mode = length(regexall("UNUSED", each.value.resource_pool)) == 0 ? "Pool" : length(regexall(
-    "^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
+    "^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
   ) > 0 ? "Static" : "None"
   server_pre_assign_by_serial = each.value.pre_assign.serial_number
   server_pre_assign_by_slot = [{
@@ -40,7 +40,7 @@ resource "intersight_server_profile" "map" {
   dynamic "assigned_server" {
     for_each = {
       for v in compact([each.value.serial_number]) : v => v if each.value.resource_pool == "UNUSED" && length(
-        regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
+        regexall("^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
       ) > 0
     }
     content {
@@ -142,11 +142,11 @@ resource "time_sleep" "server" {
 resource "intersight_server_profile" "deploy" {
   depends_on = [time_sleep.server]
   for_each   = local.server
-  action = length(regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
+  action = length(regexall("^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
   ) > 0 ? each.value.action : "No-op"
   target_platform = each.value.target_platform
   dynamic "scheduled_actions" {
-    for_each = { for v in ["activate"] : v => v if length(regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
+    for_each = { for v in ["activate"] : v => v if length(regexall("^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
     ) > 0 && each.value.action == "Deploy" }
     content {
       action            = "Activate"

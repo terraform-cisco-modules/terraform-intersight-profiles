@@ -93,7 +93,7 @@ resource "time_sleep" "domain" {
 resource "intersight_fabric_switch_profile" "deploy" {
   depends_on = [time_sleep.domain]
   for_each   = { for k, v in local.switch_profiles : k => v }
-  action = length(regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
+  action = length(regexall("^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
   ) > 0 ? each.value.action : "No-op"
   lifecycle {
     ignore_changes = [

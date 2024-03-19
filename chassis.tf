@@ -68,7 +68,7 @@ resource "time_sleep" "chassis" {
 resource "intersight_chassis_profile" "deploy" {
   depends_on = [time_sleep.chassis]
   for_each   = local.chassis
-  action = length(regexall("^[A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
+  action = length(regexall("^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
   ) > 0 ? each.value.action : "No-op"
   lifecycle { ignore_changes = [
     action_params, ancestors, create_time, description, domain_group_moid, mod_time, owners, parent,
