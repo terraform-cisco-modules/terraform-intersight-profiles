@@ -25,26 +25,32 @@ locals {
   # Get Policy Names from Profiles and Templates
   #_________________________________________________________________________________________
 
-  pb = merge({ for i in local.bucket.policies : trimsuffix(trimsuffix(i, "_policy"), "_pool") => setsubtract(distinct(compact(concat(
-    [for e in local.chassis : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]],
-    [for e in local.server : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]],
-    [for e in local.template : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]]
-    ))), ["UNUSED"]) },
-    { for i in local.bucket.domain_policies : trimsuffix(i, "_policy") => setsubtract(distinct(compact(
-      [for e in local.switch_profiles : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])
-      ) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]]
+  pba = merge({ for i in local.bucket.domain_policies : trimsuffix(i, "_policy") => setsubtract(distinct(compact(
+    [for e in local.switch_profiles : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])
+    ) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]]
     )), ["UNUSED"]) },
     { for i in local.bucket.domain_dual_policies : trimsuffix(i, "_policies") => setsubtract(distinct(compact(
       flatten([for e in local.switch_profiles : [
         for d in range(length(lookup(e, i, []))) : [d != "UNUSED" ? length(regexall("/", e[i][d])) > 0 ? e[i][d
         ] : "${e.organization}/${e[i][d]}" : "UNUSED"][0]
       ]])
-    )), ["UNUSED"]) }
+    )), ["UNUSED"]) },
+    { for i in local.bucket.policies : trimsuffix(trimsuffix(i, "_policy"), "_pool") => setsubtract(distinct(compact(concat(
+      [for e in local.chassis : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]],
+      [for e in local.server : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]],
+      [for e in local.template : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]]
+    ))), ["UNUSED"]) },
   )
-  policy_types = [for e in keys(local.pb) : e if length(regexall("resource|uuid", e)) == 0]
-  data_policies = { for e in local.policy_types : e => [for v in local.pb[e] : element(split("/", v), 1
-  ) if contains(keys(lookup(local.policies, e, {})), v) == false] }
-  data_pools = { for e in ["resource", "uuid"] : e => [for v in local.pb[e] : element(split("/", v), 1
+  pbb = { for i in local.bucket.domain_duplicate_policies : trimsuffix(i, "_policy") => setsubtract(distinct(compact(
+    [for e in local.switch_profiles : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])
+    ) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]]
+  )), ["UNUSED"]) }
+  policy_types = distinct(concat([for e in keys(local.pba) : e if length(regexall("resource|uuid", e)) == 0], [for e in keys(local.pbb) : e]))
+  data_policies = { for e in local.policy_types : e => distinct(concat(flatten([contains(keys(local.pba), e) == true ? [
+    for v in local.pba[e] : element(split("/", v), 1) if contains(keys(lookup(local.policies, e, {})), v) == false] : []]), flatten([
+    contains(keys(local.pbb), e) == true ? [for v in local.pbb[e] : element(split("/", v), 1) if contains(keys(lookup(local.policies, e, {})), v) == false
+  ] : []]))) }
+  data_pools = { for e in ["resource", "uuid"] : e => [for v in local.pba[e] : element(split("/", v), 1
   ) if contains(keys(lookup(local.pools, e, {})), v) == false] }
 
   #_________________________________________________________________________________________
@@ -59,18 +65,13 @@ locals {
     certificate_management_policy = { object_type = "certificatemanagement.Policy", policy = "certificate_management", }
     chassis                       = ["imc_access_policy", "power_policy", "snmp_policy", "thermal_policy", ]
     device_connector_policy       = { object_type = "deviceconnector.Policy", policy = "device_connector", }
-    domain_dual_policies = [
-      "port_policies",
-      "vlan_policies",
-      "vsan_policies",
+    domain_dual_policies          = ["port_policies", "vlan_policies", "vsan_policies"]
+    domain_duplicate_policies = [
+      "network_connectivity_policy", "ntp_policy", "snmp_policy", "syslog_policy",
     ]
     domain_policies = [
-      "network_connectivity_policy",
-      "ntp_policy",
-      "snmp_policy",
-      "switch_control_policy",
-      "syslog_policy",
-      "system_qos_policy",
+      "network_connectivity_policy", "ntp_policy", "snmp_policy",
+      "switch_control_policy", "syslog_policy", "system_qos_policy",
     ]
     drive_security_policy = { object_type = "storage.DriveSecurityPolicy", policy = "drive_security", }
     FIAttached = [
