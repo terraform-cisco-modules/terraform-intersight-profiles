@@ -91,9 +91,14 @@ resource "intersight_server_profile" "map" {
     }
   }
   dynamic "src_template" {
-    for_each = { for v in compact([each.value.ucs_server_template]) : v => v if each.value.attach_template == true }
+    for_each = { for v in compact([each.value.ucs_server_template]) : v => v if each.value.attach_template == true && v != "UNUSED" }
     content {
-      moid        = intersight_server_profile_template.map[src_template.value].moid
+      moid = contains(keys(local.template), each.value.ucs_server_template
+        ) == true ? intersight_server_profile_template.map[src_template.value
+        ].moid : [for i in data.intersight_search_search_item.templates["ucs_server_template"].results : i.moid if jsondecode(
+          i.additional_properties).Name == element(split("/", src_template.value), 1) && jsondecode(i.additional_properties
+      ).Organization.Moid == var.orgs[element(split("/", src_template.value), 0)]][0]
+      #moid        = intersight_server_profile_template.map[src_template.value].moid
       object_type = "server.ProfileTemplate"
     }
   }
@@ -111,7 +116,7 @@ resource "intersight_server_profile" "map" {
   }
   dynamic "uuid_pool" {
     for_each = {
-      for v in each.value.policy_bucket : v.name => v if length(regexall("uuidpool.Pool", v.object_type)) > 0
+      for v in each.value.policy_bucket : v.name => v if length(regexall("uuidpool.Pool", v.object_type)) > 0 && each.value.ucs_server_template == "UNUSED"
     }
     content {
       moid = contains(keys(lookup(local.pools, "uuid", {})), "${uuid_pool.value.org}/${uuid_pool.value.name}"

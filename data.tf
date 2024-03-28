@@ -18,3 +18,11 @@ data "intersight_search_search_item" "pools" {
     }') and ObjectType eq '${local.bucket["${each.key}_pool"].object_type}" }
   )
 }
+
+data "intersight_search_search_item" "templates" {
+  for_each = { for v in ["ucs_server_template"] : v => v if length(local.data_templates[v]) > 0 }
+  additional_properties = jsonencode(
+    { "ClassId" = "server.ProfileTemplate' and Name in ('${trim(join("', '", local.data_templates[each.key]), ", '")
+    }') and ObjectType eq 'server.ProfileTemplate" }
+  )
+}

@@ -52,6 +52,8 @@ locals {
   ] : []]))) }
   data_pools = { for e in ["resource", "uuid"] : e => [for v in local.pba[e] : element(split("/", v), 1
   ) if contains(keys(lookup(local.pools, e, {})), v) == false] }
+  data_templates = { for e in ["ucs_server_template"] : e => [for k, v in local.server : element(split("/", v[e]), 1) if v[e] != "UNUSED" && contains(
+  keys(local.template), v[e]) == false] }
 
   #_________________________________________________________________________________________
   #
@@ -171,7 +173,6 @@ locals {
   #
   # Chassis Profile
   #_________________________________________________________________________________________
-
   chassis = { for d in flatten([for org in sort(keys(var.model)) : [
     for v in lookup(lookup(var.model[org], "profiles", {}), "chassis", []) : [
       for i in v.targets : merge(local.lchassis, v, i, {
@@ -233,13 +234,13 @@ locals {
       ) == false ? [for e in lookup(i, "reservations", []) : merge(local.lserver.reservations, e)] : []
       tags = lookup(v, "tags", var.global_settings.tags)
       ucs_server_template = length(regexall("/", lookup(v, "ucs_server_template", "UNUSED"))
-      ) > 0 ? v.ucs_server_template : length(compact([lookup(v, "ucs_server_template", "")])) > 0 ? "${org}/${v.ucs_server_template}" : ""
+      ) > 0 ? v.ucs_server_template : length(compact([lookup(v, "ucs_server_template", "")])) > 0 ? "${org}/${v.ucs_server_template}" : "UNUSED"
     })
   ]] if length(lookup(lookup(var.model[org], "profiles", {}), "server", [])) > 0]) : "${d.organization}/${d.key}" => d }
   server = { for k, v in local.servers : k => merge(v, {
-    policy_bucket = length(compact([v.ucs_server_template])) > 0 ? merge(local.template[v.ucs_server_template].policy_bucket, v.policy_bucket
-    ) : v.policy_bucket
-    target_platform = v.attach_template == true && length(compact([v.ucs_server_template])
+    policy_bucket = length(compact([v.ucs_server_template])) > 0 && length(lookup(local.template, v.ucs_server_template, {})) > 0 ? merge(
+    local.template[v.ucs_server_template].policy_bucket, v.policy_bucket) : v.policy_bucket
+    target_platform = v.attach_template == true && length(lookup(local.template, v.ucs_server_template, "")
     ) > 0 ? local.template[v.ucs_server_template].target_platform : v.target_platform
   }) }
   server_serial_numbers = compact([for v in local.server : v.serial_number if length(regexall(

@@ -51,8 +51,13 @@ resource "intersight_bulk_mo_merger" "trigger_profile_update" {
   merge_action = "Merge"
   lifecycle { ignore_changes = all }
   sources {
-    object_type = intersight_server_profile_template.map[each.value.ucs_server_template].object_type
-    moid        = intersight_server_profile_template.map[each.value.ucs_server_template].moid
+    object_type = "server.ProfileTemplate"
+    moid = contains(keys(local.template), each.value.ucs_server_template
+      ) == true ? intersight_server_profile_template.map[each.value.ucs_server_template
+      ].moid : [for i in data.intersight_search_search_item.templates["ucs_server_template"].results : i.moid if jsondecode(
+        i.additional_properties).Name == element(split("/", each.value.ucs_server_template), 1) && jsondecode(i.additional_properties
+    ).Organization.Moid == var.orgs[element(split("/", each.value.ucs_server_template), 0)]][0]
+    #moid        = intersight_server_profile_template.map[each.value.ucs_server_template].moid
   }
   targets {
     object_type = "server.Profile"

@@ -38,13 +38,14 @@ A Terraform module to configure Intersight Infrastructure Profiles.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_data_policies"></a> [data\_policies](#output\_data\_policies) | n/a |
-| <a name="output_data_pools"></a> [data\_pools](#output\_data\_pools) | n/a |
-| <a name="output_chassis"></a> [chassis](#output\_chassis) | Moid and Policies for the Chassis Profiles. |
-| <a name="output_domains"></a> [domains](#output\_domains) | Moid of the Domain Cluster Profiles |
-| <a name="output_switch_profiles"></a> [switch\_profiles](#output\_switch\_profiles) | Moid and Policies of the Domain Switch Profiles |
-| <a name="output_server"></a> [server](#output\_server) | Moid and Policies for the Server Profiles. |
-| <a name="output_template"></a> [template](#output\_template) | Moid and Policies for the Server Profile Templates. |
+| <a name="output_data_policies"></a> [data\_policies](#output\_data\_policies) | Data Source for Policies. |
+| <a name="output_data_pools"></a> [data\_pools](#output\_data\_pools) | Data Source for Pools. |
+| <a name="output_data_templates"></a> [data\_templates](#output\_data\_templates) | Data Source for Templates. |
+| <a name="output_chassis"></a> [chassis](#output\_chassis) | Moids of the Chassis Profiles. |
+| <a name="output_domains"></a> [domains](#output\_domains) | Moids of the Domain Cluster Profiles |
+| <a name="output_switch_profiles"></a> [switch\_profiles](#output\_switch\_profiles) | Moids of the Domain Switch Profiles |
+| <a name="output_server"></a> [server](#output\_server) | Moids of the Server Profiles. |
+| <a name="output_template"></a> [template](#output\_template) | Moids of the Server Profile Templates. |
 ## Resources
 
 | Name | Type |
@@ -67,4 +68,5 @@ A Terraform module to configure Intersight Infrastructure Profiles.
 | [intersight_network_element_summary.fis](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/network_element_summary) | data source |
 | [intersight_search_search_item.policies](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 | [intersight_search_search_item.pools](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_search_search_item.templates](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 <!-- END_TF_DOCS -->
