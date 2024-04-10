@@ -52,8 +52,8 @@ locals {
   ] : []]))) }
   data_pools = { for e in ["resource", "uuid"] : e => [for v in local.pba[e] : element(split("/", v), 1
   ) if contains(keys(lookup(local.pools, e, {})), v) == false] }
-  data_templates = { for e in ["ucs_server_template"] : e => [for k, v in local.server : element(split("/", v[e]), 1) if v[e] != "UNUSED" && contains(
-  keys(local.template), v[e]) == false] }
+  data_templates = { for e in ["ucs_server_template"] : e => distinct([for k, v in local.server : element(split("/", v[e]), 1) if contains(
+  keys(local.template), v[e]) == false]) }
 
   #_________________________________________________________________________________________
   #

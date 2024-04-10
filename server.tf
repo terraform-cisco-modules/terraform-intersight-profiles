@@ -93,20 +93,14 @@ resource "intersight_server_profile" "map" {
   dynamic "src_template" {
     for_each = { for v in compact([each.value.ucs_server_template]) : v => v if each.value.attach_template == true && v != "UNUSED" }
     content {
-      moid = contains(keys(local.template), each.value.ucs_server_template
+      moid = contains(keys(local.template), src_template.value
         ) == true ? intersight_server_profile_template.map[src_template.value
         ].moid : [for i in data.intersight_search_search_item.templates["ucs_server_template"].results : i.moid if jsondecode(
           i.additional_properties).Name == element(split("/", src_template.value), 1) && jsondecode(i.additional_properties
       ).Organization.Moid == var.orgs[element(split("/", src_template.value), 0)]][0]
-      #moid        = intersight_server_profile_template.map[src_template.value].moid
       object_type = "server.ProfileTemplate"
     }
   }
-  #dynamic "src_template" {
-  #  for_each = { for v in compact([each.value.ucs_server_template]) : v => v if each.value.attach_template == false && each.value.create_from_template == false }
-  #  content { }
-  #}
-  #src_template {}
   dynamic "tags" {
     for_each = { for v in each.value.tags : v.key => v }
     content {
