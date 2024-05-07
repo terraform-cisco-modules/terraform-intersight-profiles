@@ -9,7 +9,8 @@ resource "intersight_server_profile_template" "map" {
     data.intersight_search_search_item.policies,
     data.intersight_search_search_item.pools,
   ]
-  for_each          = { for k, v in local.template : k => v if v.create_template == true }
+  for_each          = { for k, v in local.server_template : k => v if v.create_template == true }
+  description       = lookup(each.value, "description", "${each.value.name} Server Profile Template.")
   name              = each.value.name
   target_platform   = each.value.target_platform
   uuid_address_type = length(regexall("UNUSED", each.value.uuid_pool)) == 0 && length(compact([each.value.uuid_pool])) > 0 ? "POOL" : "NONE"
@@ -52,7 +53,7 @@ resource "intersight_bulk_mo_merger" "trigger_profile_update" {
   lifecycle { ignore_changes = all }
   sources {
     object_type = "server.ProfileTemplate"
-    moid = contains(keys(local.template), each.value.ucs_server_template
+    moid = contains(keys(local.server_template), each.value.ucs_server_template
       ) == true ? intersight_server_profile_template.map[each.value.ucs_server_template
       ].moid : [for i in data.intersight_search_search_item.templates["ucs_server_template"].results : i.moid if jsondecode(
         i.additional_properties).Name == element(split("/", each.value.ucs_server_template), 1) && jsondecode(i.additional_properties

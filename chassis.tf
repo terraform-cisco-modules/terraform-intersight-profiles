@@ -14,6 +14,7 @@ resource "intersight_chassis_profile" "map" {
     data.intersight_equipment_chassis.chassis,
     data.intersight_search_search_item.policies,
     data.intersight_search_search_item.pools,
+    intersight_chassis_profile_template.map,
     time_sleep.discovery
   ]
   for_each        = local.chassis
@@ -38,6 +39,17 @@ resource "intersight_chassis_profile" "map" {
           ].results : i.moid if jsondecode(i.additional_properties).Name == policy_bucket.value.name && jsondecode(i.additional_properties
       ).Organization.Moid == var.orgs[policy_bucket.value.org]][0]
       object_type = policy_bucket.value.object_type
+    }
+  }
+  dynamic "src_template" {
+    for_each = { for v in compact([each.value.ucs_chassis_template]) : v => v if each.value.attach_template == true && v != "UNUSED" }
+    content {
+      moid = contains(keys(local.chassis_template), src_template.value
+        ) == true ? intersight_chassis_profile_template.map[src_template.value
+        ].moid : [for i in data.intersight_search_search_item.templates["ucs_chassis_template"].results : i.moid if jsondecode(
+          i.additional_properties).Name == element(split("/", src_template.value), 1) && jsondecode(i.additional_properties
+      ).Organization.Moid == var.orgs[element(split("/", src_template.value), 0)]][0]
+      object_type = "chassis.ProfileTemplate"
     }
   }
   dynamic "tags" {

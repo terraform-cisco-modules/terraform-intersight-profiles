@@ -16,36 +16,16 @@ profiles:
     tags: # Optional List of Map of String
       key: ''
       value: ''
-    #===========================
-    # VLAN & VSAN Configuration
-    #===========================
-    vlan_policies: [] # It can be a list of 1 to share the same vlan policy or list of 2 for different per FI
-    vsan_policies: [] # List of two VSAN Policies.  One for each Fabric
-    #===========================
-    # Ports Configuration
-    #===========================
-    port_policies: [] # List of two Port Policies.  One for each Fabric
-    #===========================
-    # UCS Domain Configuration
-    #===========================
-    network_connectivity_policy: UNUSED
-    ntp_policy: UNUSED
-    snmp_policy: UNUSED
-    switch_control_policy: UNUSED
-    syslog_policy: UNUSED
-    system_qos_policy: UNUSED
   name_prefix:
-    default: ''
     chassis: ''
+    default: ''
     domain: ''
     server: ''
-    template: ''
   name_suffix:
+    chassis: ''
     default: ''
     domain: ''
-    chassis: ''
     server: ''
-    template: ''
   server:
     action: No-op
     attach_template: false
@@ -65,7 +45,32 @@ profiles:
     static_uuid_address: ''
     target_platform: FIAttached
     ucs_server_template: ''
-policy_bucket:
+policy_bucket_chassis:
+    imc_access_policy: UNUSED
+    power_policy: UNUSED
+    snmp_policy: UNUSED
+    thermal_policy: UNUSED
+policy_bucket_domain:
+    #===========================
+    # VLAN & VSAN Configuration
+    #===========================
+    vlan_policies: [] # It can be a list of 1 to share the same vlan policy or list of 2 for different per FI
+    vsan_policies: [] # List of two VSAN Policies.  One for each Fabric
+    #===========================
+    # Ports Configuration
+    #===========================
+    port_policies: [] # List of two Port Policies.  One for each Fabric
+    #===========================
+    # UCS Domain Configuration
+    #===========================
+    network_connectivity_policy: UNUSED
+    ntp_policy: UNUSED
+    snmp_policy: UNUSED
+    switch_control_policy: UNUSED
+    syslog_policy: UNUSED
+    system_qos_policy: UNUSED
+    resource_pool: UNUSED
+policy_bucket_server:
     resource_pool: UNUSED
     #===========================
     # Compute Configuration
@@ -75,6 +80,7 @@ policy_bucket:
     firmware_policy: UNUSED
     persistent_memory_policy: UNUSED # Standalone Only
     power_policy: UNUSED             # FIAttached Only
+    thermal_policy: UNUSED           # Standalone Only
     uuid_pool: UNUSED                # FIAttached Only
     virtual_media_policy: UNUSED
     #===========================
@@ -107,6 +113,23 @@ policy_bucket:
     lan_connectivity_policy: UNUSED
     san_connectivity_policy: UNUSED
 templates:
+  chassis:
+    create_template: false
+    description: ''
+    target_platform: FIAttached
+  domain:
+    create_template: false
+    description: ''
+  name_prefix:
+    chassis: ''
+    default: ''
+    domain: ''
+    server: ''
+  name_suffix:
+    chassis: ''
+    default: ''
+    domain: ''
+    server: ''
   server:
     create_template: false
     description: ''

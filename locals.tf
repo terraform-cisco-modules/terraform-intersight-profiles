@@ -1,24 +1,35 @@
 locals {
-  defaults  = yamldecode(file("${path.module}/defaults.yaml"))
-  lchassis  = local.defaults.profiles.chassis
-  ldomain   = local.defaults.profiles.domain
-  lserver   = local.defaults.profiles.server
-  ltemplate = local.defaults.templates.server
-
-  name_prefix = { for org in sort(keys(var.model)) : org => merge(
-    { for e in local.profile_names : e => lookup(lookup(var.model[org], "name_prefix", local.npfx), e, local.npfx[e]) },
+  defaults = yamldecode(file("${path.module}/defaults.yaml"))
+  name_prefix_p = { for org in sort(keys(var.model)) : org => merge(
+    { for e in local.profile_names : e => lookup(lookup(lookup(var.model[org], "profiles", {}), "name_prefix", local.p_npfx), e, local.p_npfx[e]) },
     { organization = org })
   }
-  name_suffix = { for org in sort(keys(var.model)) : org => merge(
-    { for e in local.profile_names : e => lookup(lookup(var.model[org], "name_suffix", local.nsfx), e, local.nsfx[e]) },
+  name_suffix_p = { for org in sort(keys(var.model)) : org => merge(
+    { for e in local.profile_names : e => lookup(lookup(lookup(var.model[org], "profiles", {}), "name_suffix", local.p_nsfx), e, local.p_nsfx[e]) },
     { organization = org })
   }
-  npfx          = local.defaults.profiles.name_prefix
-  nsfx          = local.defaults.profiles.name_suffix
-  org_moids     = { for k, v in var.orgs : v => k }
-  policies      = lookup(var.policies, "map", {})
-  pools         = lookup(var.pools, "map", {})
-  profile_names = ["chassis", "domain", "server", "template"]
+  name_prefix_t = { for org in sort(keys(var.model)) : org => merge(
+    { for e in local.profile_names : e => lookup(lookup(lookup(var.model[org], "templates", {}), "name_prefix", local.t_npfx), e, local.t_npfx[e]) },
+    { organization = org })
+  }
+  name_suffix_t = { for org in sort(keys(var.model)) : org => merge(
+    { for e in local.profile_names : e => lookup(lookup(lookup(var.model[org], "templates", {}), "name_suffix", local.t_nsfx), e, local.t_nsfx[e]) },
+    { organization = org })
+  }
+  org_moids        = { for k, v in var.orgs : v => k }
+  p_npfx           = local.defaults.profiles.name_prefix
+  p_nsfx           = local.defaults.profiles.name_suffix
+  policies         = lookup(var.policies, "map", {})
+  pools            = lookup(var.pools, "map", {})
+  profile_chassis  = local.defaults.profiles.chassis
+  profile_domain   = local.defaults.profiles.domain
+  profile_names    = ["chassis", "domain", "server", "template"]
+  profile_server   = local.defaults.profiles.server
+  t_npfx           = local.defaults.templates.name_prefix
+  t_nsfx           = local.defaults.templates.name_suffix
+  template_chassis = local.defaults.templates.domain
+  template_domain  = local.defaults.templates.chassis
+  template_server  = local.defaults.templates.server
 
   #_________________________________________________________________________________________
   #
@@ -38,7 +49,7 @@ locals {
     { for i in local.bucket.policies : trimsuffix(trimsuffix(i, "_policy"), "_pool") => setsubtract(distinct(compact(concat(
       [for e in local.chassis : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]],
       [for e in local.server : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]],
-      [for e in local.template : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]]
+      [for e in local.server_template : [lookup(e, i, "UNUSED") != "UNUSED" ? length(regexall("/", e[i])) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]]
     ))), ["UNUSED"]) },
   )
   pbb = { for i in local.bucket.domain_duplicate_policies : trimsuffix(i, "_policy") => setsubtract(distinct(compact(
@@ -52,8 +63,11 @@ locals {
   ] : []]))) }
   data_pools = { for e in ["resource", "uuid"] : e => [for v in local.pba[e] : element(split("/", v), 1
   ) if contains(keys(lookup(local.pools, e, {})), v) == false] }
-  data_templates = { for e in ["ucs_server_template"] : e => distinct([for k, v in local.server : element(split("/", v[e]), 1) if contains(
-  keys(local.template), v[e]) == false]) }
+  data_templates = { for e in local.template_types : e => distinct([for k, v in local.profiles[element(split("_", e), 1)] : element(split("/", v[e]), 1
+  ) if contains(keys(local.templates[element(split("_", e), 1)]), v[e]) == false]) }
+  template_types = ["ucs_chassis_template", "ucs_domain_template", "ucs_server_template", "ucs_switch_template"]
+  profiles       = { chassis = local.chassis, domain = local.domain, server = local.server, switch = local.switch_profiles }
+  templates      = { chassis = local.chassis_template, domain = local.domain_template, server = local.server_template, switch = local.switch_templates }
 
   #_________________________________________________________________________________________
   #
@@ -119,21 +133,71 @@ locals {
     vlan_policy             = { object_type = "fabric.EthNetworkPolicy", policy = "vlan", }
     vsan_policies           = { object_type = "fabric.FcNetworkPolicy", policy = "vsan", }
     vsan_policy             = { object_type = "fabric.FcNetworkPolicy", policy = "vsan", }
+    ucs_chassis_template    = { object_type = "chassis.ProfileTemplate", template = "chassis" }
+    ucs_domain_template     = { object_type = "fabric.SwitchClusterProfileTemplate", template = "domain" }
+    ucs_server_template     = { object_type = "server.ProfileTemplate", template = "chassis" }
+    ucs_chassis_template    = { object_type = "fabric.SwitchProfileTemplate", template = "switch" }
   }
+
+  #_________________________________________________________________________________________
+  #
+  # Domain Profile Templates
+  #_________________________________________________________________________________________
+  domain_template = { for i in flatten([for org in sort(keys(var.model)) : [
+    for v in lookup(lookup(var.model[org], "templates", {}), "domain", []) : merge(
+      local.defaults.policy_bucket_domain, local.template_domain, v, {
+        key          = v.name
+        name         = "${local.name_prefix_t[org].domain}${v.name}${local.name_suffix_t[org].domain}"
+        organization = org
+        tags         = lookup(v, "tags", var.global_settings.tags)
+    })
+  ] if length(lookup(lookup(var.model[org], "templates", {}), "domain", [])) > 0]) : "${i.organization}/${i.key}" => i }
+  switch_templates = { for i in flatten([
+    for k, v in local.domain_template : [
+      for s in [0, 1] : merge(v, {
+        key          = k
+        name         = s == 0 ? "${v.name}-A" : "${v.name}-B"
+        organization = v.organization
+        policy_bucket = merge({
+          for e in local.bucket.domain_policies : replace(local.bucket[e].object_type, ".", "") => {
+            name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 1) : lookup(v, e, "UNUSED")
+            object_type = local.bucket[e].object_type
+            org         = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 0) : v.organization
+            policy      = local.bucket[e].policy
+          } if lookup(v, e, "UNUSED") != "UNUSED"
+          }, {
+          for e in local.bucket.domain_dual_policies : local.bucket[e].policy => {
+            name = length(
+              lookup(v, e, [])) > 1 ? [length(regexall("/", v[e][s])) > 0 ? element(split("/", v[e][s]), 1) : v[e][s]][0] : length(
+              lookup(v, e, [])) > 0 ? [length(regexall("/", v[e][0])) > 0 ? element(split("/", v[e][0]), 1) : v[e][0]][0
+            ] : "UNUSED"
+            object_type = local.bucket[e].object_type
+            org = length(
+              lookup(v, e, [])) > 1 ? [length(regexall("/", v[e][s])) > 0 ? element(split("/", v[e][s]), 0) : v.organization][0] : length(
+              lookup(v, e, [])) > 0 ? [length(regexall("/", v[e][0])) > 0 ? element(split("/", v[e][0]), 0) : v.organization][0
+            ] : v.organization
+            policy = local.bucket[e].policy
+          }
+        })
+        tags = lookup(v, "tags", var.global_settings.tags)
+      })
+  ]]) : "${i.organization}/${i.name}" => i }
 
   #_________________________________________________________________________________________
   #
   # Domain Profiles
   #_________________________________________________________________________________________
   domain = { for d in flatten([for org in sort(keys(var.model)) : [
-    for v in lookup(lookup(var.model[org], "profiles", {}), "domain", []) : merge(local.ldomain, v, {
+    for v in lookup(lookup(var.model[org], "profiles", {}), "domain", []) : merge(local.profile_domain, v, {
       key          = v.name
-      name         = "${local.name_prefix[org].domain}${v.name}${local.name_suffix[org].domain}"
+      name         = "${local.name_prefix_p[org].domain}${v.name}${local.name_suffix_p[org].domain}"
       organization = org
       tags         = lookup(v, "tags", var.global_settings.tags)
+      ucs_domain_template = length(regexall("/", lookup(v, "ucs_domain_template", "UNUSED"))
+      ) > 0 ? v.ucs_domain_template : length(compact([lookup(v, "ucs_domain_template", "")])) > 0 ? "${org}/${v.ucs_domain_template}" : "UNUSED"
     })
   ] if length(lookup(lookup(var.model[org], "profiles", {}), "domain", [])) > 0]) : "${d.organization}/${d.key}" => d }
-  switch_profiles = { for i in flatten([
+  switch_profile = { for i in flatten([
     for k, v in local.domain : [
       for s in [0, 1] : merge(v, {
         domain_profile = k
@@ -162,22 +226,31 @@ locals {
         })
         serial_number = length(lookup(v, "serial_numbers", [])) == 2 ? element(v.serial_numbers, s) : length(lookup(v, "serial_numbers", [])
         ) == 1 ? element(v.serial_numbers, 0) : "unknown"
+        ucs_switch_template = length(regexall("/", lookup(v, "ucs_domain_template", "UNUSED"))
+          ) > 0 && s == 0 ? "${v.ucs_domain_template}-A" : length(regexall("/", lookup(v, "ucs_domain_template", "UNUSED"))
+          ) > 0 ? "${v.ucs_domain_template}-B" : length(compact([lookup(v, "ucs_domain_template", "")])
+          ) > 0 && s == 0 ? "${v.organization}/${v.ucs_domain_template}-A" : length(compact([lookup(v, "ucs_domain_template", "")])
+        ) > 0 && s == 0 ? "${v.organization}/${v.ucs_domain_template}-B" : "UNUSED"
       })
     ]
   ]) : "${i.organization}/${i.name}" => i }
+  switch_profiles = { for k, v in local.switch_profile : k => merge(v, {
+    policy_bucket = length(compact([v.ucs_domain_template])) > 0 && length(lookup(local.domain_template, v.ucs_domain_template, {})) > 0 ? merge(
+    local.domain_template[v.ucs_domain_template].policy_bucket, v.policy_bucket) : v.policy_bucket
+  }) }
   domain_serial_numbers = compact(flatten([for v in local.switch_profiles : v.serial_number if length(regexall(
   "^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0]))
   wait_for_domain = distinct(compact([for i in local.switch_profiles : i.action if i.action != "No-op"]))
 
   #_________________________________________________________________________________________
   #
-  # Chassis Profile
+  # Chassis Profile Templates
   #_________________________________________________________________________________________
-  chassis = { for d in flatten([for org in sort(keys(var.model)) : [
-    for v in lookup(lookup(var.model[org], "profiles", {}), "chassis", []) : [
-      for i in v.targets : merge(local.lchassis, v, i, {
-        key          = i.name
-        name         = "${local.name_prefix[org].chassis}${i.name}${local.name_suffix[org].chassis}"
+  chassis_template = { for i in flatten([for org in sort(keys(var.model)) : [
+    for v in lookup(lookup(var.model[org], "templates", {}), "chassis", []) : merge(
+      local.defaults.policy_bucket_chassis, local.template_chassis, v, {
+        key          = v.name
+        name         = "${local.name_prefix_t[org].template}${v.name}${local.name_suffix_t[org].template}"
         organization = org
         policy_bucket = { for e in local.bucket.chassis : replace(local.bucket[e].object_type, ".", "") => {
           name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 1) : lookup(v, e, "UNUSED")
@@ -186,8 +259,33 @@ locals {
           policy      = local.bucket[e].policy
         } if lookup(v, e, "UNUSED") != "UNUSED" }
         tags = lookup(v, "tags", var.global_settings.tags)
-      })
+    })
+  ] if length(lookup(lookup(var.model[org], "templates", {}), "chassis", [])) > 0]) : "${i.organization}/${i.key}" => i }
+
+  #_________________________________________________________________________________________
+  #
+  # Chassis Profiles
+  #_________________________________________________________________________________________
+  chasses = { for d in flatten([for org in sort(keys(var.model)) : [for v in lookup(lookup(var.model[org], "profiles", {}), "chassis", []) : [
+    for i in v.targets : merge(local.defaults.policy_bucket_chassis, local.profile_chassis, v, i, {
+      key          = i.name
+      name         = "${local.name_prefix_p[org].server}${i.name}${local.name_suffix_p[org].server}"
+      organization = org
+      policy_bucket = { for e in local.bucket.chassis : replace(local.bucket[e].object_type, ".", "") => {
+        name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 1) : lookup(v, e, "UNUSED")
+        object_type = local.bucket[e].object_type
+        org         = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 0) : org
+        policy      = local.bucket[e].policy
+      } if lookup(v, e, "UNUSED") != "UNUSED" }
+      tags = lookup(v, "tags", var.global_settings.tags)
+      ucs_chassis_template = length(regexall("/", lookup(v, "ucs_chassis_template", "UNUSED"))
+      ) > 0 ? v.ucs_chassis_template : length(compact([lookup(v, "ucs_chassis_template", "")])) > 0 ? "${org}/${v.ucs_chassis_template}" : "UNUSED"
+    })
   ]] if length(lookup(lookup(var.model[org], "profiles", {}), "chassis", [])) > 0]) : "${d.organization}/${d.key}" => d }
+  chassis = { for k, v in local.chasses : k => merge(v, {
+    policy_bucket = length(compact([v.ucs_chassis_template])) > 0 && length(lookup(local.chassis_template, v.ucs_chassis_template, {})) > 0 ? merge(
+    local.chassis_template[v.ucs_chassis_template].policy_bucket, v.policy_bucket) : v.policy_bucket
+  }) }
   chassis_serial_numbers = compact([for v in local.chassis : v.serial_number if length(regexall(
   "^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0])
 
@@ -195,11 +293,11 @@ locals {
   #
   # Server Profile Templates
   #_________________________________________________________________________________________
-  template = { for d in flatten([for org in sort(keys(var.model)) : [
+  server_template = { for i in flatten([for org in sort(keys(var.model)) : [
     for v in lookup(lookup(var.model[org], "templates", {}), "server", []) : merge(
-      local.defaults.policy_bucket, local.ltemplate, v, {
+      local.defaults.policy_bucket_server, local.template_server, v, {
         key          = v.name
-        name         = "${local.name_prefix[org].template}${v.name}${local.name_suffix[org].template}"
+        name         = "${local.name_prefix_t[org].server}${v.name}${local.name_suffix_t[org].server}"
         organization = org
         policy_bucket = { for e in setsubtract(local.bucket.policies, local.bucket[v.target_platform]) : replace(
           local.bucket[e].object_type, ".", "") => {
@@ -207,20 +305,19 @@ locals {
           object_type = local.bucket[e].object_type
           org         = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 0) : org
           policy      = local.bucket[e].policy
-          } if lookup(v, e, "UNUSED") != "UNUSED"
-        }
+        } if lookup(v, e, "UNUSED") != "UNUSED" }
         tags = lookup(v, "tags", var.global_settings.tags)
     })
-  ] if length(lookup(lookup(var.model[org], "templates", {}), "server", [])) > 0]) : "${d.organization}/${d.key}" => d }
+  ] if length(lookup(lookup(var.model[org], "templates", {}), "server", [])) > 0]) : "${i.organization}/${i.key}" => i }
 
   #_________________________________________________________________________________________
   #
   # Server Profiles
   #_________________________________________________________________________________________
   servers = { for d in flatten([for org in sort(keys(var.model)) : [for v in lookup(lookup(var.model[org], "profiles", {}), "server", []) : [
-    for i in v.targets : merge(local.defaults.policy_bucket, local.lserver, v, i, {
+    for i in v.targets : merge(local.defaults.policy_bucket_server, local.profile_server, v, i, {
       key          = i.name
-      name         = "${local.name_prefix[org].server}${i.name}${local.name_suffix[org].server}"
+      name         = "${local.name_prefix_p[org].server}${i.name}${local.name_suffix_p[org].server}"
       organization = org
       policy_bucket = { for e in setsubtract(local.bucket.policies, local.bucket[v.target_platform]
         ) : replace(local.bucket[e].object_type, ".", "") => {
@@ -229,19 +326,19 @@ locals {
         org         = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 0) : org
         policy      = local.bucket[e].policy
       } if lookup(v, e, "UNUSED") != "UNUSED" }
-      pre_assign = merge(local.lserver.pre_assign, lookup(i, "pre_assign", {}), { domain_name = lookup(v, "domain_name", "") })
+      pre_assign = merge(local.profile_server.pre_assign, lookup(i, "pre_assign", {}), { domain_name = lookup(v, "domain_name", "") })
       reservations = lookup(v, "ignore_reservations", true
-      ) == false ? [for e in lookup(i, "reservations", []) : merge(local.lserver.reservations, e)] : []
+      ) == false ? [for e in lookup(i, "reservations", []) : merge(local.profile_server.reservations, e)] : []
       tags = lookup(v, "tags", var.global_settings.tags)
       ucs_server_template = length(regexall("/", lookup(v, "ucs_server_template", "UNUSED"))
       ) > 0 ? v.ucs_server_template : length(compact([lookup(v, "ucs_server_template", "")])) > 0 ? "${org}/${v.ucs_server_template}" : "UNUSED"
     })
   ]] if length(lookup(lookup(var.model[org], "profiles", {}), "server", [])) > 0]) : "${d.organization}/${d.key}" => d }
   server = { for k, v in local.servers : k => merge(v, {
-    policy_bucket = length(compact([v.ucs_server_template])) > 0 && length(lookup(local.template, v.ucs_server_template, {})) > 0 ? merge(
-    local.template[v.ucs_server_template].policy_bucket, v.policy_bucket) : v.policy_bucket
-    target_platform = v.attach_template == true && length(lookup(local.template, v.ucs_server_template, "")
-    ) > 0 ? local.template[v.ucs_server_template].target_platform : v.target_platform
+    policy_bucket = length(compact([v.ucs_server_template])) > 0 && length(lookup(local.server_template, v.ucs_server_template, {})) > 0 ? merge(
+    local.server_template[v.ucs_server_template].policy_bucket, v.policy_bucket) : v.policy_bucket
+    target_platform = v.attach_template == true && length(lookup(local.server_template, v.ucs_server_template, "")
+    ) > 0 ? local.server_template[v.ucs_server_template].target_platform : v.target_platform
   }) }
   server_serial_numbers = compact([for v in local.server : v.serial_number if length(regexall(
   "^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0])

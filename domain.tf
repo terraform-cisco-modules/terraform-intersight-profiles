@@ -10,6 +10,9 @@ data "intersight_network_element_summary" "fis" {
 }
 
 resource "intersight_fabric_switch_cluster_profile" "map" {
+  depends_on = [
+    intersight_fabric_switch_cluster_profile_template.map
+  ]
   for_each    = { for k, v in local.domain : k => v }
   description = lookup(each.value, "description", "${each.value.name} Domain Profile.")
   name        = each.value.name
