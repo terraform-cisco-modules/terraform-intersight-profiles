@@ -9,13 +9,12 @@ profiles:
     snmp_policy: UNUSED
     thermal_policy: UNUSED
     target_platform: FIAttached
+    ucs_chassis_profile_template: ''
   domain:
     action: No-op
     description: ''
     name: '**REQUIRED**'
-    tags: # Optional List of Map of String
-      key: ''
-      value: ''
+    ucs_domain_profile_template: ''
   name_prefix:
     chassis: ''
     default: ''
@@ -44,6 +43,7 @@ profiles:
     serial_number: unknown # Required if not assigned from Resource Pool.
     static_uuid_address: ''
     target_platform: FIAttached
+    ucs_server_profile_template: ''
     ucs_server_template: ''
 policy_bucket_chassis:
     imc_access_policy: UNUSED

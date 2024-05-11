@@ -23,7 +23,7 @@ locals {
   pools            = lookup(var.pools, "map", {})
   profile_chassis  = local.defaults.profiles.chassis
   profile_domain   = local.defaults.profiles.domain
-  profile_names    = ["chassis", "domain", "server", "template"]
+  profile_names    = ["chassis", "domain", "server"]
   profile_server   = local.defaults.profiles.server
   t_npfx           = local.defaults.templates.name_prefix
   t_nsfx           = local.defaults.templates.name_suffix
@@ -65,7 +65,7 @@ locals {
   ) if contains(keys(lookup(local.pools, e, {})), v) == false] }
   data_templates = { for e in local.template_types : e => distinct([for k, v in local.profiles[element(split("_", e), 1)] : element(split("/", v[e]), 1
   ) if contains(keys(local.templates[element(split("_", e), 1)]), v[e]) == false]) }
-  template_types = ["ucs_chassis_template", "ucs_domain_template", "ucs_server_template", "ucs_switch_template"]
+  template_types = ["ucs_chassis_profile_template", "ucs_domain_profile_template", "ucs_server_profile_template", "ucs_switch_profile_template"]
   profiles       = { chassis = local.chassis, domain = local.domain, server = local.server, switch = local.switch_profiles }
   templates      = { chassis = local.chassis_template, domain = local.domain_template, server = local.server_template, switch = local.switch_templates }
 
@@ -110,33 +110,33 @@ locals {
       "san_connectivity_policy", "sd_card_policy", "serial_over_lan_policy", "smtp_policy", "snmp_policy", "ssh_policy",
       "storage_policy", "syslog_policy", "thermal_policy", "uuid_pool", "virtual_kvm_policy", "virtual_media_policy",
     ]
-    port_policies           = { object_type = "fabric.PortPolicy", policy = "port", }
-    port_policy             = { object_type = "fabric.PortPolicy", policy = "port", }
-    power_policy            = { object_type = "power.Policy", policy = "power", }
-    resource_pool           = { object_type = "resourcepool.Pool", policy = "resource", }
-    san_connectivity_policy = { object_type = "vnic.SanConnectivityPolicy", policy = "san_connectivity", }
-    sd_card_policy          = { object_type = "sdcard.Policy", policy = "sd_card", }
-    serial_over_lan_policy  = { object_type = "sol.Policy", policy = "serial_over_lan", }
-    smtp_policy             = { object_type = "smtp.Policy", policy = "smtp", }
-    snmp_policy             = { object_type = "snmp.Policy", policy = "snmp", }
-    ssh_policy              = { object_type = "ssh.Policy", policy = "ssh", }
-    Standalone              = ["imc_access_poicy", "power_policy", "resource_pool", "uuid_pool"]
-    storage_policy          = { object_type = "storage.StoragePolicy", policy = "storage", }
-    switch_control_policy   = { object_type = "fabric.SwitchControlPolicy", policy = "switch_control", }
-    syslog_policy           = { object_type = "syslog.Policy", policy = "syslog", }
-    system_qos_policy       = { object_type = "fabric.SystemQosPolicy", policy = "system_qos", }
-    thermal_policy          = { object_type = "thermal.Policy", policy = "thermal", }
-    uuid_pool               = { object_type = "uuidpool.Pool", policy = "uuid", }
-    virtual_kvm_policy      = { object_type = "kvm.Policy", policy = "virtual_kvm", }
-    virtual_media_policy    = { object_type = "vmedia.Policy", policy = "virtual_media", }
-    vlan_policies           = { object_type = "fabric.EthNetworkPolicy", policy = "vlan", }
-    vlan_policy             = { object_type = "fabric.EthNetworkPolicy", policy = "vlan", }
-    vsan_policies           = { object_type = "fabric.FcNetworkPolicy", policy = "vsan", }
-    vsan_policy             = { object_type = "fabric.FcNetworkPolicy", policy = "vsan", }
-    ucs_chassis_template    = { object_type = "chassis.ProfileTemplate", template = "chassis" }
-    ucs_domain_template     = { object_type = "fabric.SwitchClusterProfileTemplate", template = "domain" }
-    ucs_server_template     = { object_type = "server.ProfileTemplate", template = "chassis" }
-    ucs_chassis_template    = { object_type = "fabric.SwitchProfileTemplate", template = "switch" }
+    port_policies                = { object_type = "fabric.PortPolicy", policy = "port", }
+    port_policy                  = { object_type = "fabric.PortPolicy", policy = "port", }
+    power_policy                 = { object_type = "power.Policy", policy = "power", }
+    resource_pool                = { object_type = "resourcepool.Pool", policy = "resource", }
+    san_connectivity_policy      = { object_type = "vnic.SanConnectivityPolicy", policy = "san_connectivity", }
+    sd_card_policy               = { object_type = "sdcard.Policy", policy = "sd_card", }
+    serial_over_lan_policy       = { object_type = "sol.Policy", policy = "serial_over_lan", }
+    smtp_policy                  = { object_type = "smtp.Policy", policy = "smtp", }
+    snmp_policy                  = { object_type = "snmp.Policy", policy = "snmp", }
+    ssh_policy                   = { object_type = "ssh.Policy", policy = "ssh", }
+    Standalone                   = ["imc_access_poicy", "power_policy", "resource_pool", "uuid_pool"]
+    storage_policy               = { object_type = "storage.StoragePolicy", policy = "storage", }
+    switch_control_policy        = { object_type = "fabric.SwitchControlPolicy", policy = "switch_control", }
+    syslog_policy                = { object_type = "syslog.Policy", policy = "syslog", }
+    system_qos_policy            = { object_type = "fabric.SystemQosPolicy", policy = "system_qos", }
+    thermal_policy               = { object_type = "thermal.Policy", policy = "thermal", }
+    uuid_pool                    = { object_type = "uuidpool.Pool", policy = "uuid", }
+    virtual_kvm_policy           = { object_type = "kvm.Policy", policy = "virtual_kvm", }
+    virtual_media_policy         = { object_type = "vmedia.Policy", policy = "virtual_media", }
+    vlan_policies                = { object_type = "fabric.EthNetworkPolicy", policy = "vlan", }
+    vlan_policy                  = { object_type = "fabric.EthNetworkPolicy", policy = "vlan", }
+    vsan_policies                = { object_type = "fabric.FcNetworkPolicy", policy = "vsan", }
+    vsan_policy                  = { object_type = "fabric.FcNetworkPolicy", policy = "vsan", }
+    ucs_chassis_profile_template = { object_type = "chassis.ProfileTemplate", template = "chassis" }
+    ucs_domain_profile_template  = { object_type = "fabric.SwitchClusterProfileTemplate", template = "domain" }
+    ucs_server_profile_template  = { object_type = "server.ProfileTemplate", template = "server" }
+    ucs_switch_profile_template  = { object_type = "fabric.SwitchProfileTemplate", template = "switch" }
   }
 
   #_________________________________________________________________________________________
@@ -193,8 +193,8 @@ locals {
       name         = "${local.name_prefix_p[org].domain}${v.name}${local.name_suffix_p[org].domain}"
       organization = org
       tags         = lookup(v, "tags", var.global_settings.tags)
-      ucs_domain_template = length(regexall("/", lookup(v, "ucs_domain_template", "UNUSED"))
-      ) > 0 ? v.ucs_domain_template : length(compact([lookup(v, "ucs_domain_template", "")])) > 0 ? "${org}/${v.ucs_domain_template}" : "UNUSED"
+      ucs_domain_profile_template = length(regexall("/", lookup(v, "ucs_domain_profile_template", "UNUSED"))
+      ) > 0 ? v.ucs_domain_profile_template : length(compact([lookup(v, "ucs_domain_profile_template", "")])) > 0 ? "${org}/${v.ucs_domain_profile_template}" : "UNUSED"
     })
   ] if length(lookup(lookup(var.model[org], "profiles", {}), "domain", [])) > 0]) : "${d.organization}/${d.key}" => d }
   switch_profile = { for i in flatten([
@@ -226,17 +226,18 @@ locals {
         })
         serial_number = length(lookup(v, "serial_numbers", [])) == 2 ? element(v.serial_numbers, s) : length(lookup(v, "serial_numbers", [])
         ) == 1 ? element(v.serial_numbers, 0) : "unknown"
-        ucs_switch_template = length(regexall("/", lookup(v, "ucs_domain_template", "UNUSED"))
-          ) > 0 && s == 0 ? "${v.ucs_domain_template}-A" : length(regexall("/", lookup(v, "ucs_domain_template", "UNUSED"))
-          ) > 0 ? "${v.ucs_domain_template}-B" : length(compact([lookup(v, "ucs_domain_template", "")])
-          ) > 0 && s == 0 ? "${v.organization}/${v.ucs_domain_template}-A" : length(compact([lookup(v, "ucs_domain_template", "")])
-        ) > 0 && s == 0 ? "${v.organization}/${v.ucs_domain_template}-B" : "UNUSED"
+        ucs_domain_profile_template = v.ucs_domain_profile_template
+        ucs_switch_profile_template = length(regexall("/", lookup(v, "ucs_domain_profile_template", "UNUSED"))
+          ) > 0 && s == 0 ? "${v.ucs_domain_profile_template}-A" : length(regexall("/", lookup(v, "ucs_domain_profile_template", "UNUSED"))
+          ) > 0 ? "${v.ucs_domain_profile_template}-B" : length(compact([lookup(v, "ucs_domain_profile_template", "")])
+          ) > 0 && s == 0 ? "${v.organization}/${v.ucs_domain_profile_template}-A" : length(compact([lookup(v, "ucs_domain_profile_template", "")])
+        ) > 0 && s == 0 ? "${v.organization}/${v.ucs_domain_profile_template}-B" : "UNUSED"
       })
     ]
   ]) : "${i.organization}/${i.name}" => i }
   switch_profiles = { for k, v in local.switch_profile : k => merge(v, {
-    policy_bucket = length(compact([v.ucs_domain_template])) > 0 && length(lookup(local.domain_template, v.ucs_domain_template, {})) > 0 ? merge(
-    local.domain_template[v.ucs_domain_template].policy_bucket, v.policy_bucket) : v.policy_bucket
+    policy_bucket = length(compact([v.ucs_switch_profile_template])) > 0 && length(lookup(local.domain_template, v.ucs_domain_profile_template, {})) > 0 ? merge(
+    local.domain_template[v.ucs_switch_profile_template].policy_bucket, v.policy_bucket) : v.policy_bucket
   }) }
   domain_serial_numbers = compact(flatten([for v in local.switch_profiles : v.serial_number if length(regexall(
   "^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0]))
@@ -278,13 +279,13 @@ locals {
         policy      = local.bucket[e].policy
       } if lookup(v, e, "UNUSED") != "UNUSED" }
       tags = lookup(v, "tags", var.global_settings.tags)
-      ucs_chassis_template = length(regexall("/", lookup(v, "ucs_chassis_template", "UNUSED"))
-      ) > 0 ? v.ucs_chassis_template : length(compact([lookup(v, "ucs_chassis_template", "")])) > 0 ? "${org}/${v.ucs_chassis_template}" : "UNUSED"
+      ucs_chassis_profile_template = length(regexall("/", lookup(v, "ucs_chassis_profile_template", "UNUSED"))
+      ) > 0 ? v.ucs_chassis_profile_template : length(compact([lookup(v, "ucs_chassis_profile_template", "")])) > 0 ? "${org}/${v.ucs_chassis_profile_template}" : "UNUSED"
     })
   ]] if length(lookup(lookup(var.model[org], "profiles", {}), "chassis", [])) > 0]) : "${d.organization}/${d.key}" => d }
   chassis = { for k, v in local.chasses : k => merge(v, {
-    policy_bucket = length(compact([v.ucs_chassis_template])) > 0 && length(lookup(local.chassis_template, v.ucs_chassis_template, {})) > 0 ? merge(
-    local.chassis_template[v.ucs_chassis_template].policy_bucket, v.policy_bucket) : v.policy_bucket
+    policy_bucket = length(compact([v.ucs_chassis_profile_template])) > 0 && length(lookup(local.chassis_template, v.ucs_chassis_profile_template, {})) > 0 ? merge(
+    local.chassis_template[v.ucs_chassis_profile_template].policy_bucket, v.policy_bucket) : v.policy_bucket
   }) }
   chassis_serial_numbers = compact([for v in local.chassis : v.serial_number if length(regexall(
   "^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0])
@@ -330,15 +331,17 @@ locals {
       reservations = lookup(v, "ignore_reservations", true
       ) == false ? [for e in lookup(i, "reservations", []) : merge(local.profile_server.reservations, e)] : []
       tags = lookup(v, "tags", var.global_settings.tags)
-      ucs_server_template = length(regexall("/", lookup(v, "ucs_server_template", "UNUSED"))
-      ) > 0 ? v.ucs_server_template : length(compact([lookup(v, "ucs_server_template", "")])) > 0 ? "${org}/${v.ucs_server_template}" : "UNUSED"
+      ucs_server_profile_template = length(compact([lookup(v, "ucs_server_template", "")])) > 0 ? length(regexall("/", lookup(v, "ucs_server_template", "UNUSED"))
+        ) > 0 ? v.ucs_server_template : length(compact([lookup(v, "ucs_server_template", "")])) > 0 ? "${org}/${v.ucs_server_template}" : "UNUSED" : length(
+        regexall("/", lookup(v, "ucs_server_profile_template", "UNUSED"))
+      ) > 0 ? v.ucs_server_profile_template : length(compact([lookup(v, "ucs_server_profile_template", "")])) > 0 ? "${org}/${v.ucs_server_profile_template}" : "UNUSED"
     })
   ]] if length(lookup(lookup(var.model[org], "profiles", {}), "server", [])) > 0]) : "${d.organization}/${d.key}" => d }
   server = { for k, v in local.servers : k => merge(v, {
-    policy_bucket = length(compact([v.ucs_server_template])) > 0 && length(lookup(local.server_template, v.ucs_server_template, {})) > 0 ? merge(
-    local.server_template[v.ucs_server_template].policy_bucket, v.policy_bucket) : v.policy_bucket
-    target_platform = v.attach_template == true && length(lookup(local.server_template, v.ucs_server_template, "")
-    ) > 0 ? local.server_template[v.ucs_server_template].target_platform : v.target_platform
+    policy_bucket = length(compact([v.ucs_server_profile_template])) > 0 && length(lookup(local.server_template, v.ucs_server_profile_template, {})) > 0 ? merge(
+    local.server_template[v.ucs_server_profile_template].policy_bucket, v.policy_bucket) : v.policy_bucket
+    target_platform = v.attach_template == true && length(lookup(local.server_template, v.ucs_server_profile_template, "")
+    ) > 0 ? local.server_template[v.ucs_server_profile_template].target_platform : v.target_platform
   }) }
   server_serial_numbers = compact([for v in local.server : v.serial_number if length(regexall(
   "^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0])

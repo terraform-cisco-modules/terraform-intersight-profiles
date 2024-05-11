@@ -21,6 +21,16 @@ resource "intersight_fabric_switch_cluster_profile" "map" {
     moid        = var.orgs[each.value.organization]
     object_type = "organization.Organization"
   }
+  dynamic "src_template" {
+    for_each = { for v in compact([each.value.ucs_domain_profile_template]) : v => v if each.value.attach_template == true && v != "UNUSED" }
+    content {
+      moid = contains(keys(local.domain_template), src_template.value) == true ? intersight_fabric_switch_cluster_profile_template.map[src_template.value
+        ].moid : [for i in data.intersight_search_search_item.templates["ucs_domain_profile_template"].results : i.moid if jsondecode(
+          i.additional_properties).Name == element(split("/", src_template.value), 1) && jsondecode(i.additional_properties
+      ).Organization.Moid == var.orgs[element(split("/", src_template.value), 0)]][0]
+      object_type = "server.ProfileTemplate"
+    }
+  }
   dynamic "tags" {
     for_each = { for v in each.value.tags : v.key => v }
     content {
@@ -68,6 +78,16 @@ resource "intersight_fabric_switch_profile" "map" {
   }
   switch_cluster_profile { moid = intersight_fabric_switch_cluster_profile.map[each.value.domain_profile].moid }
   type = "instance"
+  dynamic "src_template" {
+    for_each = { for v in compact([each.value.ucs_switch_profile_template]) : v => v if each.value.attach_template == true && v != "UNUSED" }
+    content {
+      moid = contains(keys(local.domain_template), src_template.value) == true ? intersight_fabric_switch_profile_template.map[src_template.value
+        ].moid : [for i in data.intersight_search_search_item.templates["ucs_switch_profile_template"].results : i.moid if jsondecode(
+          i.additional_properties).Name == element(split("/", src_template.value), 1) && jsondecode(i.additional_properties
+      ).Organization.Moid == var.orgs[element(split("/", src_template.value), 0)]][0]
+      object_type = "server.ProfileTemplate"
+    }
+  }
   dynamic "tags" {
     for_each = each.value.tags
     content {
