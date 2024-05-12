@@ -3,11 +3,7 @@ profiles:
   chassis:
     action: No-op
     description: ''
-    imc_access_policy: UNUSED
-    power_policy: UNUSED
     serial_number: unknown
-    snmp_policy: UNUSED
-    thermal_policy: UNUSED
     target_platform: FIAttached
     ucs_chassis_profile_template: ''
   domain:
@@ -54,12 +50,12 @@ policy_bucket_domain:
     #===========================
     # VLAN & VSAN Configuration
     #===========================
-    vlan_policies: [] # It can be a list of 1 to share the same vlan policy or list of 2 for different per FI
-    vsan_policies: [] # List of two VSAN Policies.  One for each Fabric
+    vlan_policies: [UNUSED] # It can be a list of 1 to share the same vlan policy or list of 2 for different per FI
+    vsan_policies: [UNUSED] # List of two VSAN Policies.  One for each Fabric
     #===========================
     # Ports Configuration
     #===========================
-    port_policies: [] # List of two Port Policies.  One for each Fabric
+    port_policies: [UNUSED] # List of two Port Policies.  One for each Fabric
     #===========================
     # UCS Domain Configuration
     #===========================
