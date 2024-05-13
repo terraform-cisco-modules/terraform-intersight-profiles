@@ -2,12 +2,14 @@
 profiles:
   chassis:
     action: No-op
+    attach_template: false
     description: ''
     serial_number: unknown
     target_platform: FIAttached
     ucs_chassis_profile_template: ''
   domain:
     action: No-op
+    attach_template: false
     description: ''
     name: '**REQUIRED**'
     ucs_domain_profile_template: ''

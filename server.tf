@@ -33,7 +33,7 @@ resource "intersight_server_profile" "map" {
   static_uuid_address = each.value.static_uuid_address
   target_platform     = each.value.target_platform
   type                = "instance"
-  uuid_address_type = length([for v in each.value.policy_bucket : v if length(regexall("pool", v.object_type)) > 0]
+  uuid_address_type = length([for v in each.value.policy_bucket : v if length(regexall("uuidpool.Pool", v.object_type)) > 0]
   ) > 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
   lifecycle { ignore_changes = [action, config_context, mod_time, uuid_lease, scheduled_actions, wait_for_completion] }
   organization { moid = var.orgs[each.value.organization] }
@@ -51,22 +51,17 @@ resource "intersight_server_profile" "map" {
   dynamic "associated_server_pool" {
     for_each = { for v in each.value.policy_bucket : v.name => v if v.object_type == "resourcepool.Pool" }
     content {
-      moid = contains(keys(lookup(local.pools, "resource", {})), "${associated_server_pool.value.org}/${associated_server_pool.value.name}"
-        ) == true ? local.pools.resource["${associated_server_pool.value.org}/${associated_server_pool.value.name}"] : [for i in data.intersight_search_search_item.pools["resource"
-          ].results : i.moid if jsondecode(i.additional_properties).Name == associated_server_pool.value.name && jsondecode(i.additional_properties
-      ).Organization.Moid == var.orgs[associated_server_pool.value.org]][0]
+      moid = contains(keys(lookup(local.pools, "resource", {})), associated_server_pool.value.name
+      ) == true ? local.pools.resource[associated_server_pool.value.name] : local.pools_data.resource[associated_server_pool.value.name].moid
       object_type = "resourcepool.Pool"
     }
   }
   dynamic "policy_bucket" {
-    for_each = { for v in each.value.policy_bucket : v.object_type => v if length(regexall("pool", v.object_type)
-    ) == 0 && each.value.attach_template == false && v.name != "UNUSED" }
+    for_each = { for v in each.value.policy_bucket : v.object_type => v if length(regexall("pool", v.object_type)) == 0 && element(split("/", v.name), 1
+    ) != "UNUSED" && element(split("/", each.value.ucs_server_profile_template), 1) == "UNUSED" && each.value.attach_template == false }
     content {
-      moid = contains(keys(lookup(local.policies, policy_bucket.value.policy, {})), "${policy_bucket.value.org}/${policy_bucket.value.name}"
-        ) == true ? local.policies[policy_bucket.value.policy]["${policy_bucket.value.org}/${policy_bucket.value.name}"
-        ] : [for i in data.intersight_search_search_item.policies[policy_bucket.value.policy
-          ].results : i.moid if jsondecode(i.additional_properties).Name == policy_bucket.value.name && jsondecode(i.additional_properties
-      ).Organization.Moid == var.orgs[policy_bucket.value.org]][0]
+      moid = contains(keys(lookup(local.policies, policy_bucket.value.policy, {})), policy_bucket.value.name
+      ) == true ? local.policies[policy_bucket.value.policy][policy_bucket.value.name] : local.policies_data[policy_bucket.value.policy][policy_bucket.value.name].moid
       object_type = policy_bucket.value.object_type
     }
   }
@@ -91,12 +86,10 @@ resource "intersight_server_profile" "map" {
     }
   }
   dynamic "src_template" {
-    for_each = { for v in compact([each.value.ucs_server_profile_template]) : v => v if each.value.attach_template == true && v != "UNUSED" }
+    for_each = { for v in compact([each.value.ucs_server_profile_template]) : v => v if each.value.attach_template == true && element(split("/", v), 1) != "UNUSED" }
     content {
       moid = contains(keys(local.server_template), src_template.value) == true ? intersight_server_profile_template.map[src_template.value
-        ].moid : [for i in data.intersight_search_search_item.templates["ucs_server_profile_template"].results : i.moid if jsondecode(
-          i.additional_properties).Name == element(split("/", src_template.value), 1) && jsondecode(i.additional_properties
-      ).Organization.Moid == var.orgs[element(split("/", src_template.value), 0)]][0]
+      ].moid : local.templates_data.ucs_server_profile_template[src_template.value].moid
       object_type = "server.ProfileTemplate"
     }
   }
@@ -109,13 +102,12 @@ resource "intersight_server_profile" "map" {
   }
   dynamic "uuid_pool" {
     for_each = {
-      for v in each.value.policy_bucket : v.name => v if length(regexall("uuidpool.Pool", v.object_type)) > 0 && each.value.ucs_server_template == "UNUSED"
+      for v in each.value.policy_bucket : v.name => v if v.object_type == "uuidpool.Pool" && element(split("/", v.name), 1
+      ) != "UNUSED" && element(split("/", each.value.ucs_server_profile_template), 1) == "UNUSED" && each.value.attach_template == false
     }
     content {
-      moid = contains(keys(lookup(local.pools, "uuid", {})), "${uuid_pool.value.org}/${uuid_pool.value.name}"
-        ) == true ? local.pools.uuid["${uuid_pool.value.org}/${uuid_pool.value.name}"] : [for i in data.intersight_search_search_item.pools["uuid"
-          ].results : i.moid if jsondecode(i.additional_properties).Name == uuid_pool.value.name && jsondecode(i.additional_properties
-      ).Organization.Moid == var.orgs[uuid_pool.value.org]][0]
+      moid = contains(keys(lookup(local.pools, "uuid", {})), uuid_pool.value.name
+      ) == true ? local.pools.uuid[uuid_pool.value.name] : local.pools_data.uuid[uuid_pool.value.name].moid
       object_type = "uuidpool.Pool"
     }
   }
@@ -158,7 +150,7 @@ resource "intersight_server_profile" "deploy" {
     server_pool, shared_scope, src_template, tags, target_platform, uuid, uuid_address_type, uuid_lease, uuid_pool, version_context
   ] }
   name = each.value.name
-  uuid_address_type = length([for v in each.value.policy_bucket : v if length(regexall("pool", v.object_type)) > 0]
+  uuid_address_type = length([for v in each.value.policy_bucket : v if length(regexall("uuidpool.Pool", v.object_type)) > 0]
   ) > 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
   organization { moid = var.orgs[each.value.organization] }
 }

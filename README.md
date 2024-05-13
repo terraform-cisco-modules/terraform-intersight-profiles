@@ -38,14 +38,9 @@ A Terraform module to configure Intersight Infrastructure Profiles.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_data_policies"></a> [data\_policies](#output\_data\_policies) | Data Source for Policies. |
-| <a name="output_data_pools"></a> [data\_pools](#output\_data\_pools) | Data Source for Pools. |
-| <a name="output_data_templates"></a> [data\_templates](#output\_data\_templates) | Data Source for Templates. |
-| <a name="output_chassis"></a> [chassis](#output\_chassis) | Moids of the Chassis Profiles. |
-| <a name="output_domains"></a> [domains](#output\_domains) | Moids of the Domain Cluster Profiles |
-| <a name="output_switch_profiles"></a> [switch\_profiles](#output\_switch\_profiles) | Moids of the Domain Switch Profiles |
-| <a name="output_server"></a> [server](#output\_server) | Moids of the Server Profiles. |
-| <a name="output_template"></a> [template](#output\_template) | Moids of the Server Profile Templates. |
+| <a name="output_data"></a> [data](#output\_data) | Moid's of the Policies/Pools/Templates that were not defined locally. |
+| <a name="output_profiles"></a> [profiles](#output\_profiles) | Moids of the Chassis/Domain/Server Profiles. |
+| <a name="output_templates"></a> [templates](#output\_templates) | Moids of the Chassis/Domain/Server Profiles Templates. |
 ## Resources
 
 | Name | Type |

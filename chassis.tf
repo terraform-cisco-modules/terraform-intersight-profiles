@@ -31,24 +31,18 @@ resource "intersight_chassis_profile" "map" {
     content { moid = data.intersight_equipment_chassis.chassis[assigned_chassis.value].results[0].moid }
   }
   dynamic "policy_bucket" {
-    for_each = { for v in each.value.policy_bucket : v.object_type => v if v.name != "UNUSED" }
+    for_each = { for v in each.value.policy_bucket : v.object_type => v if element(split("/", v.name), 1) != "UNUSED" }
     content {
-      moid = contains(keys(lookup(local.policies, policy_bucket.value.policy, {})), "${policy_bucket.value.org}/${policy_bucket.value.name}"
-        ) == true ? local.policies[policy_bucket.value.policy]["${policy_bucket.value.org}/${policy_bucket.value.name}"
-        ] : [for i in data.intersight_search_search_item.policies[policy_bucket.value.policy
-          ].results : i.moid if jsondecode(i.additional_properties).Name == policy_bucket.value.name && jsondecode(i.additional_properties
-      ).Organization.Moid == var.orgs[policy_bucket.value.org]][0]
+      moid = contains(keys(lookup(local.policies, policy_bucket.value.policy, {})), policy_bucket.value.name
+      ) == true ? local.policies[policy_bucket.value.policy][policy_bucket.value.name] : local.policies_data[policy_bucket.value.policy][policy_bucket.value.name].moid
       object_type = policy_bucket.value.object_type
     }
   }
   dynamic "src_template" {
-    for_each = { for v in compact([each.value.ucs_chassis_profile_template]) : v => v if each.value.attach_template == true && v != "UNUSED" }
+    for_each = { for v in compact([each.value.ucs_chassis_profile_template]) : v => v if each.value.attach_template == true && element(split("/", v), 1) != "UNUSED" }
     content {
-      moid = contains(keys(local.chassis_template), src_template.value
-        ) == true ? intersight_chassis_profile_template.map[src_template.value
-        ].moid : [for i in data.intersight_search_search_item.templates["ucs_chassis_profile_template"].results : i.moid if jsondecode(
-          i.additional_properties).Name == element(split("/", src_template.value), 1) && jsondecode(i.additional_properties
-      ).Organization.Moid == var.orgs[element(split("/", src_template.value), 0)]][0]
+      moid = contains(keys(local.chassis_template), src_template.value) == true ? intersight_chassis_profile_template.map[src_template.value
+      ].moid : local.templates_data.ucs_chassis_profile_template[src_template.value].moid
       object_type = "chassis.ProfileTemplate"
     }
   }

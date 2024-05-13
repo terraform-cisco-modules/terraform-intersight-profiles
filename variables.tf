@@ -27,4 +27,3 @@ variable "pools" {
   description = "Pools - Module Output."
   type        = any
 }
-

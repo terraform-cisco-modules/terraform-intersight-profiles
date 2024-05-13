@@ -16,7 +16,7 @@ locals {
     { for e in local.profile_names : e => lookup(lookup(lookup(var.model[org], "templates", {}), "name_suffix", local.t_nsfx), e, local.t_nsfx[e]) },
     { organization = org })
   }
-  org_moids        = { for k, v in var.orgs : v => k }
+  org_names        = { for k, v in var.orgs : v => k }
   p_npfx           = local.defaults.profiles.name_prefix
   p_nsfx           = local.defaults.profiles.name_suffix
   policies         = lookup(var.policies, "map", {})
@@ -57,17 +57,39 @@ locals {
     ) > 0 ? e[i] : "${e.organization}/${e[i]}" : "UNUSED"][0]]
   )), ["UNUSED"]) }
   policy_types = distinct(concat([for e in keys(local.pba) : e if length(regexall("resource|uuid", e)) == 0], [for e in keys(local.pbb) : e]))
+  pool_types   = ["resource", "uuid"]
   data_policies = { for e in local.policy_types : e => distinct(concat(flatten([contains(keys(local.pba), e) == true ? [
     for v in local.pba[e] : element(split("/", v), 1) if contains(keys(lookup(local.policies, e, {})), v) == false] : []]), flatten([
     contains(keys(local.pbb), e) == true ? [for v in local.pbb[e] : element(split("/", v), 1) if contains(keys(lookup(local.policies, e, {})), v) == false
   ] : []]))) }
-  data_pools = { for e in ["resource", "uuid"] : e => [for v in local.pba[e] : element(split("/", v), 1
+  data_pools = { for e in local.pool_types : e => [for v in local.pba[e] : element(split("/", v), 1
   ) if contains(keys(lookup(local.pools, e, {})), v) == false] }
   data_templates = { for e in local.template_types : e => distinct([for k, v in local.profiles[element(split("_", e), 1)] : element(split("/", v[e]), 1
-  ) if contains(keys(local.templates[element(split("_", e), 1)]), v[e]) == false]) }
+  ) if contains(keys(local.templates[element(split("_", e), 1)]), v[e]) == false && length(regexall("UNUSED", element(split("/", v[e]), 1))) == 0]) }
   template_types = ["ucs_chassis_profile_template", "ucs_domain_profile_template", "ucs_server_profile_template", "ucs_switch_profile_template"]
   profiles       = { chassis = local.chassis, domain = local.domain, server = local.server, switch = local.switch_profiles }
   templates      = { chassis = local.chassis_template, domain = local.domain_template, server = local.server_template, switch = local.switch_templates }
+  policies_data = { for k in keys(data.intersight_search_search_item.policies) : k => {
+    for e in lookup(data.intersight_search_search_item.policies[k], "results", []
+      ) : "${local.org_names[jsondecode(e.additional_properties).Organization.Moid]}/${jsondecode(e.additional_properties).Name}" => merge({
+        additional_properties = jsondecode(e.additional_properties)
+        moid                  = e.moid
+    })
+  } }
+  pools_data = { for k in keys(data.intersight_search_search_item.pools) : k => {
+    for e in lookup(data.intersight_search_search_item.pools[k], "results", []
+      ) : "${local.org_names[jsondecode(e.additional_properties).Organization.Moid]}/${jsondecode(e.additional_properties).Name}" => merge({
+        additional_properties = jsondecode(e.additional_properties)
+        moid                  = e.moid
+    })
+  } }
+  templates_data = { for k in keys(data.intersight_search_search_item.templates) : k => {
+    for e in lookup(data.intersight_search_search_item.templates[k], "results", []
+      ) : "${local.org_names[jsondecode(e.additional_properties).Organization.Moid]}/${jsondecode(e.additional_properties).Name}" => merge({
+        additional_properties = jsondecode(e.additional_properties)
+        moid                  = e.moid
+    })
+  } }
 
   #_________________________________________________________________________________________
   #
@@ -154,29 +176,22 @@ locals {
   ] if length(lookup(lookup(var.model[org], "templates", {}), "domain", [])) > 0]) : "${i.organization}/${i.key}" => i }
   switch_templates = { for i in flatten([
     for k, v in local.domain_template : [
-      for s in [0, 1] : merge(v, {
+      for x in [0, 1] : merge(v, {
         key          = k
-        name         = s == 0 ? "${v.name}-A" : "${v.name}-B"
+        name         = x == 0 ? "${v.name}-A" : "${v.name}-B"
         organization = v.organization
         policy_bucket = merge({
           for e in local.bucket.domain_policies : replace(local.bucket[e].object_type, ".", "") => {
-            name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 1) : lookup(v, e, "UNUSED")
+            name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? v[e] : "${v.organization}/${lookup(v, e, "UNUSED")}"
             object_type = local.bucket[e].object_type
-            org         = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 0) : v.organization
             policy      = local.bucket[e].policy
           } if lookup(v, e, "UNUSED") != "UNUSED"
           }, {
           for e in local.bucket.domain_dual_policies : local.bucket[e].policy => {
-            name = length(
-              lookup(v, e, [])) > 1 ? [length(regexall("/", v[e][s])) > 0 ? element(split("/", v[e][s]), 1) : v[e][s]][0] : length(
-              lookup(v, e, [])) > 0 ? [length(regexall("/", v[e][0])) > 0 ? element(split("/", v[e][0]), 1) : v[e][0]][0
-            ] : "UNUSED"
+            name = length(lookup(v, e, [])) >= 2 ? [length(regexall("/", v[e][x])) > 0 ? v[e][x] : "${v.organization}/${v[e][x]}"][0] : length(lookup(v, e, [])
+            ) == 1 ? [length(regexall("/", v[e][0])) > 0 ? v[e][0] : "${v.organization}/${v[e][0]}"][0] : "${v.organization}/UNUSED"
             object_type = local.bucket[e].object_type
-            org = length(
-              lookup(v, e, [])) > 1 ? [length(regexall("/", v[e][s])) > 0 ? element(split("/", v[e][s]), 0) : v.organization][0] : length(
-              lookup(v, e, [])) > 0 ? [length(regexall("/", v[e][0])) > 0 ? element(split("/", v[e][0]), 0) : v.organization][0
-            ] : v.organization
-            policy = local.bucket[e].policy
+            policy      = local.bucket[e].policy
           }
         })
         tags = lookup(v, "tags", var.global_settings.tags)
@@ -194,44 +209,33 @@ locals {
       organization = org
       tags         = lookup(v, "tags", var.global_settings.tags)
       ucs_domain_profile_template = length(regexall("/", lookup(v, "ucs_domain_profile_template", "UNUSED"))
-      ) > 0 ? v.ucs_domain_profile_template : length(compact([lookup(v, "ucs_domain_profile_template", "")])) > 0 ? "${org}/${v.ucs_domain_profile_template}" : "UNUSED"
+      ) > 0 ? v.ucs_domain_profile_template : length(compact([lookup(v, "ucs_domain_profile_template", "")])) > 0 ? "${org}/${v.ucs_domain_profile_template}" : "${org}/UNUSED"
     })
   ] if length(lookup(lookup(var.model[org], "profiles", {}), "domain", [])) > 0]) : "${d.organization}/${d.key}" => d }
   switch_profile = { for i in flatten([
     for k, v in local.domain : [
-      for s in [0, 1] : merge(v, {
+      for x in [0, 1] : merge(v, {
         domain_profile = k
-        name           = s == 0 ? "${v.name}-A" : "${v.name}-B"
+        name           = x == 0 ? "${v.name}-A" : "${v.name}-B"
         organization   = v.organization
         policy_bucket = merge({
           for e in local.bucket.domain_policies : replace(local.bucket[e].object_type, ".", "") => {
-            name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 1) : lookup(v, e, "UNUSED")
+            name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? v[e] : "${v.organization}/${lookup(v, e, "UNUSED")}"
             object_type = local.bucket[e].object_type
-            org         = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 0) : v.organization
             policy      = local.bucket[e].policy
           } if lookup(v, e, "UNUSED") != "UNUSED"
           }, {
           for e in local.bucket.domain_dual_policies : local.bucket[e].policy => {
-            name = length(
-              lookup(v, e, [])) > 1 ? [length(regexall("/", v[e][s])) > 0 ? element(split("/", v[e][s]), 1) : v[e][s]][0] : length(
-              lookup(v, e, [])) > 0 ? [length(regexall("/", v[e][0])) > 0 ? element(split("/", v[e][0]), 1) : v[e][0]][0
-            ] : "UNUSED"
+            name = length(lookup(v, e, [])) >= 2 ? [length(regexall("/", v[e][x])) > 0 ? v[e][x] : "${v.organization}/${v[e][x]}"][0] : length(lookup(v, e, [])
+            ) == 1 ? [length(regexall("/", v[e][0])) > 0 ? v[e][0] : "${v.organization}/${v[e][0]}"][0] : "${v.organization}/UNUSED"
             object_type = local.bucket[e].object_type
-            org = length(
-              lookup(v, e, [])) > 1 ? [length(regexall("/", v[e][s])) > 0 ? element(split("/", v[e][s]), 0) : v.organization][0] : length(
-              lookup(v, e, [])) > 0 ? [length(regexall("/", v[e][0])) > 0 ? element(split("/", v[e][0]), 0) : v.organization][0
-            ] : v.organization
-            policy = local.bucket[e].policy
+            policy      = local.bucket[e].policy
           }
         })
-        serial_number = length(lookup(v, "serial_numbers", [])) == 2 ? element(v.serial_numbers, s) : length(lookup(v, "serial_numbers", [])
+        serial_number = length(lookup(v, "serial_numbers", [])) == 2 ? element(v.serial_numbers, x) : length(lookup(v, "serial_numbers", [])
         ) == 1 ? element(v.serial_numbers, 0) : "unknown"
         ucs_domain_profile_template = v.ucs_domain_profile_template
-        ucs_switch_profile_template = length(regexall("/", lookup(v, "ucs_domain_profile_template", "UNUSED"))
-          ) > 0 && s == 0 ? "${v.ucs_domain_profile_template}-A" : length(regexall("/", lookup(v, "ucs_domain_profile_template", "UNUSED"))
-          ) > 0 ? "${v.ucs_domain_profile_template}-B" : length(compact([lookup(v, "ucs_domain_profile_template", "")])
-          ) > 0 && s == 0 ? "${v.organization}/${v.ucs_domain_profile_template}-A" : length(compact([lookup(v, "ucs_domain_profile_template", "")])
-        ) > 0 && s == 0 ? "${v.organization}/${v.ucs_domain_profile_template}-B" : "UNUSED"
+        ucs_switch_profile_template = x == 0 ? "${v.ucs_domain_profile_template}-A" : "${v.ucs_domain_profile_template}-B"
       })
     ]
   ]) : "${i.organization}/${i.name}" => i }
@@ -254,9 +258,8 @@ locals {
         name         = "${local.name_prefix_t[org].template}${v.name}${local.name_suffix_t[org].template}"
         organization = org
         policy_bucket = { for e in local.bucket.chassis : replace(local.bucket[e].object_type, ".", "") => {
-          name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 1) : lookup(v, e, "UNUSED")
+          name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? v[e] : "${v.organization}/${lookup(v, e, "UNUSED")}"
           object_type = local.bucket[e].object_type
-          org         = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 0) : org
           policy      = local.bucket[e].policy
         } if lookup(v, e, "UNUSED") != "UNUSED" }
         tags = lookup(v, "tags", var.global_settings.tags)
@@ -273,9 +276,8 @@ locals {
       name         = "${local.name_prefix_p[org].server}${i.name}${local.name_suffix_p[org].server}"
       organization = org
       policy_bucket = { for e in local.bucket.chassis : replace(local.bucket[e].object_type, ".", "") => {
-        name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 1) : lookup(v, e, "UNUSED")
+        name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? v[e] : "${v.organization}/${lookup(v, e, "UNUSED")}"
         object_type = local.bucket[e].object_type
-        org         = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 0) : org
         policy      = local.bucket[e].policy
       } if lookup(v, e, "UNUSED") != "UNUSED" }
       tags = lookup(v, "tags", var.global_settings.tags)
@@ -302,9 +304,8 @@ locals {
         organization = org
         policy_bucket = { for e in setsubtract(local.bucket.policies, local.bucket[v.target_platform]) : replace(
           local.bucket[e].object_type, ".", "") => {
-          name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 1) : lookup(v, e, "UNUSED")
+          name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? v[e] : "${v.organization}/${lookup(v, e, "UNUSED")}"
           object_type = local.bucket[e].object_type
-          org         = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 0) : org
           policy      = local.bucket[e].policy
         } if lookup(v, e, "UNUSED") != "UNUSED" }
         tags = lookup(v, "tags", var.global_settings.tags)
@@ -322,9 +323,8 @@ locals {
       organization = org
       policy_bucket = { for e in setsubtract(local.bucket.policies, local.bucket[v.target_platform]
         ) : replace(local.bucket[e].object_type, ".", "") => {
-        name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 1) : lookup(v, e, "UNUSED")
+        name        = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? v[e] : "${v.organization}/${lookup(v, e, "UNUSED")}"
         object_type = local.bucket[e].object_type
-        org         = length(regexall("/", lookup(v, e, "UNUSED"))) > 0 ? element(split("/", v[e]), 0) : org
         policy      = local.bucket[e].policy
       } if lookup(v, e, "UNUSED") != "UNUSED" }
       pre_assign = merge(local.profile_server.pre_assign, lookup(i, "pre_assign", {}), { domain_name = lookup(v, "domain_name", "") })
