@@ -20,10 +20,12 @@ output "data" {
 output "profiles" {
   description = "Moids of the Chassis/Domain/Server Profiles."
   value = {
-    chassis       = { for e in sort(keys(intersight_chassis_profile.map)) : e => intersight_chassis_profile.map[e].moid }
-    domain        = { for v in sort(keys(intersight_fabric_switch_cluster_profile.map)) : v => intersight_fabric_switch_cluster_profile.map[v].moid }
-    domain_switch = { for v in sort(keys(intersight_fabric_switch_profile.map)) : v => intersight_fabric_switch_profile.map[v].moid }
-    server        = { for e in sort(keys(intersight_server_profile.map)) : e => intersight_server_profile.map[e].moid }
+    chassis = { for e in sort(keys(intersight_chassis_profile.map)) : e => intersight_chassis_profile.map[e].moid }
+    domain = {
+      cluster = { for v in sort(keys(intersight_fabric_switch_cluster_profile.map)) : v => intersight_fabric_switch_cluster_profile.map[v].moid }
+      switch  = { for v in sort(keys(intersight_fabric_switch_profile.map)) : v => intersight_fabric_switch_profile.map[v].moid }
+    }
+    server = { for e in sort(keys(intersight_server_profile.map)) : e => intersight_server_profile.map[e].moid }
   }
 }
 
@@ -35,9 +37,11 @@ output "profiles" {
 output "templates" {
   description = "Moids of the Chassis/Domain/Server Profiles Templates."
   value = {
-    chassis       = { for e in sort(keys(intersight_chassis_profile_template.map)) : e => intersight_chassis_profile_template.map[e].moid }
-    domain        = { for v in sort(keys(intersight_fabric_switch_cluster_profile_template.map)) : v => intersight_fabric_switch_cluster_profile_template.map[v].moid }
-    domain_switch = { for v in sort(keys(intersight_fabric_switch_profile_template.map)) : v => intersight_fabric_switch_profile_template.map[v].moid }
-    server        = { for e in sort(keys(intersight_server_profile_template.map)) : e => intersight_server_profile_template.map[e].moid }
+    chassis = { for e in sort(keys(intersight_chassis_profile_template.map)) : e => intersight_chassis_profile_template.map[e].moid }
+    domain = {
+      cluster = { for v in sort(keys(intersight_fabric_switch_cluster_profile_template.map)) : v => intersight_fabric_switch_cluster_profile_template.map[v].moid }
+      switch  = { for v in sort(keys(intersight_fabric_switch_profile_template.map)) : v => intersight_fabric_switch_profile_template.map[v].moid }
+    }
+    server = { for e in sort(keys(intersight_server_profile_template.map)) : e => intersight_server_profile_template.map[e].moid }
   }
 }
