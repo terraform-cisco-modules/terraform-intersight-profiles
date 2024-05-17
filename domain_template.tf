@@ -30,7 +30,8 @@ resource "intersight_fabric_switch_profile_template" "map" {
     intersight_fabric_switch_cluster_profile_template.map
   ]
   for_each = { for k, v in local.switch_templates : k => v if v.create_template == true }
-  name     = each.value.name
+  description = each.value.description
+  name        = each.value.name
   lifecycle { ignore_changes = [action, config_context, mod_time] }
   switch_cluster_profile_template { moid = intersight_fabric_switch_cluster_profile_template.map[each.value.domain_profile].moid }
   dynamic "policy_bucket" {
