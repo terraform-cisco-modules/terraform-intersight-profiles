@@ -17,7 +17,7 @@ resource "intersight_fabric_switch_cluster_profile" "map" {
   description = lookup(each.value, "description", "${each.value.name} Domain Profile.")
   name        = each.value.name
   type        = "instance"
-  organization {    moid        = var.orgs[each.value.org]  }
+  organization { moid = var.orgs[each.value.org] }
   dynamic "src_template" {
     for_each = { for v in compact([each.value.ucs_domain_profile_template]) : v => v if each.value.attach_template == true && element(split("/", v), 1) != "UNUSED" }
     content {
