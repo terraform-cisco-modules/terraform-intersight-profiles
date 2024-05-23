@@ -9,10 +9,7 @@ resource "intersight_fabric_switch_cluster_profile_template" "map" {
   description = lookup(each.value, "description", "${each.value.name} Domain Profile Template.")
   name        = each.value.name
   type        = "instance"
-  organization {
-    moid        = var.orgs[each.value.organization]
-    object_type = "organization.Organization"
-  }
+  organization {    moid        = var.orgs[each.value.org]  }
   dynamic "tags" {
     for_each = { for v in each.value.tags : v.key => v }
     content {
@@ -29,11 +26,11 @@ resource "intersight_fabric_switch_profile_template" "map" {
     data.intersight_search_search_item.pools,
     intersight_fabric_switch_cluster_profile_template.map
   ]
-  for_each = { for k, v in local.switch_templates : k => v if v.create_template == true }
+  for_each    = { for k, v in local.switch_templates : k => v if v.create_template == true }
   description = each.value.description
   name        = each.value.name
   lifecycle { ignore_changes = [action, config_context, mod_time] }
-  switch_cluster_profile_template { moid = intersight_fabric_switch_cluster_profile_template.map[each.value.domain_profile].moid }
+  switch_cluster_profile_template { moid = intersight_fabric_switch_cluster_profile_template.map[each.value.domain_template].moid }
   dynamic "policy_bucket" {
     for_each = { for v in each.value.policy_bucket : v.object_type => v if element(split("/", v.name), 1) != "UNUSED" }
     content {

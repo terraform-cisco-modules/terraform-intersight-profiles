@@ -36,7 +36,7 @@ resource "intersight_server_profile" "map" {
   uuid_address_type = length([for v in each.value.policy_bucket : v if length(regexall("uuidpool.Pool", v.object_type)) > 0]
   ) > 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
   lifecycle { ignore_changes = [action, config_context, mod_time, uuid_lease, scheduled_actions, wait_for_completion] }
-  organization { moid = var.orgs[each.value.organization] }
+  organization { moid = var.orgs[each.value.org] }
   dynamic "assigned_server" {
     for_each = {
       for v in compact([each.value.serial_number]) : v => v if each.value.resource_pool == "UNUSED" && length(
@@ -82,7 +82,7 @@ resource "intersight_server_profile" "map" {
       object_type = length(regexall("^(wwnn|wwpn)$", reservation_references.value.identity_type)) > 0 ? "fcpool.ReservationReference" : "${reservation_references.value.identity_type}pool.ReservationReference"
       reservation_moid = length(regexall("/", reservation_references.value.pool_name)
         ) > 0 ? local.pools["${reservation_references.value.identity_type}_reservations"]["${reservation_references.value.pool_name}/${reservation_references.value.identity}"
-      ] : local.pools["${reservation_references.value.identity_type}_reservations"]["${each.value.organization}/${reservation_references.value.pool_name}/${reservation_references.value.identity}"]
+      ] : local.pools["${reservation_references.value.identity_type}_reservations"]["${each.value.org}/${reservation_references.value.pool_name}/${reservation_references.value.identity}"]
     }
   }
   dynamic "src_template" {
@@ -152,5 +152,5 @@ resource "intersight_server_profile" "deploy" {
   name = each.value.name
   uuid_address_type = length([for v in each.value.policy_bucket : v if length(regexall("uuidpool.Pool", v.object_type)) > 0]
   ) > 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
-  organization { moid = var.orgs[each.value.organization] }
+  organization { moid = var.orgs[each.value.org] }
 }

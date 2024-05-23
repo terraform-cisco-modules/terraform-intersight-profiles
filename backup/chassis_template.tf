@@ -13,7 +13,7 @@ resource "intersight_chassis_profile_template" "map" {
   name            = each.value.name
   target_platform = each.value.target_platform
   lifecycle { ignore_changes = [action, config_context, mod_time] }
-  organization { moid = var.orgs[each.value.organization] }
+  organization { moid = var.orgs[each.value.org] }
   dynamic "policy_bucket" {
     for_each = { for v in each.value.policy_bucket : v.object_type => v if element(split("/", v.name), 1) != "UNUSED" }
     content {

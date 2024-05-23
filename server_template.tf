@@ -15,7 +15,7 @@ resource "intersight_server_profile_template" "map" {
   target_platform   = each.value.target_platform
   uuid_address_type = length(regexall("UNUSED", each.value.uuid_pool)) == 0 && length(compact([each.value.uuid_pool])) > 0 ? "POOL" : "NONE"
   lifecycle { ignore_changes = [action, config_context, description, mod_time] }
-  organization { moid = var.orgs[each.value.organization] }
+  organization { moid = var.orgs[each.value.org] }
   dynamic "policy_bucket" {
     for_each = { for v in each.value.policy_bucket : v.object_type => v if length(regexall("pool", v.object_type)) == 0 && element(split("/", v.name), 1) != "UNUSED" }
     content {
