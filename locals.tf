@@ -3,7 +3,7 @@ locals {
   modelp    = { for org in local.org_keys : org => lookup(var.model[org], "profiles", {}) }
   modelt    = { for org in local.org_keys : org => lookup(var.model[org], "templates", {}) }
   org_keys  = sort(keys(var.model))
-  org_names = { for k, v in var.orgs : v => k }
+  org_names = merge({ for k, v in var.orgs : v => k }, { x_cisco_intersight_internal = "5ddfd9ff6972652d31ee6582" })
   policies = merge(lookup(var.policies, "map", {}), {
     npfx = { for org in keys(var.orgs) : org => lookup(lookup(lookup(var.policies, "map", {}), "name_prefix", {}), org, local.defaults.policy_prefix) }
     nsfx = { for org in keys(var.orgs) : org => lookup(lookup(lookup(var.policies, "map", {}), "name_suffix", {}), org, local.defaults.policy_suffix) }
