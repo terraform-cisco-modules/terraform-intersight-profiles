@@ -9,9 +9,49 @@ data "intersight_compute_physical_summary" "server" {
   serial   = each.value
 }
 
+#_________________________________________________________________________________________
+#
+# Intersight: UCS Server Profiles
+# GUI Location: Infrastructure Service > Configure > Profiles : UCS Server Profiles
+#_________________________________________________________________________________________
+resource "intersight_server_profile" "reservations" {
+  for_each        = local.server
+  target_platform = each.value.target_platform
+  lifecycle { ignore_changes = [
+    action, action_params, ancestors, assigned_server, associated_server, associated_server_pool, create_time, description, domain_group_moid,
+    mod_time, owners, parent, permission_resources, policy_bucket, running_workflows, scheduled_actions, server_assignment_mode,
+    server_pool, shared_scope, src_template, tags, target_platform, uuid, uuid_address_type, uuid_lease, uuid_pool, version_context
+  ] }
+  name = each.value.name
+  uuid_address_type = length([for v in each.value.policy_bucket : v if length(regexall("uuidpool.Pool", v.object_type)) > 0]
+  ) > 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
+  organization { moid = var.orgs[each.value.org] }
+  dynamic "reservation_references" {
+    for_each = { for v in each.value.reservations : v.identity => v }
+    content {
+      additional_properties = length(regexall("^(ip|mac|wwnn|wwpn)$", reservation_references.value.identity_type)
+        ) > 0 ? jsonencode({
+          ConsumerType = reservation_references.value.identity_type == "ip" && length(regexall("band", reservation_references.value.management_type)
+            ) > 0 ? "${title(lower(reservation_references.value.management_type))}${title(lower(reservation_references.value.ip_type))}-Access" : length(
+            regexall("ip", reservation_references.value.identity_type)) > 0 ? "ISCSI" : length(regexall("mac", reservation_references.value.identity_type)) > 0 ? "Vnic" : length(
+            regexall("wwnn", reservation_references.value.identity_type)
+          ) > 0 ? "WWNN" : "Vhba"
+          ConsumerName = length(regexall("band", reservation_references.value.management_type)
+          ) == 0 && reservation_references.value.identity_type != "wwnn" ? reservation_references.value.interface : ""
+      }) : ""
+      class_id    = length(regexall("^(wwnn|wwpn)$", reservation_references.value.identity_type)) > 0 ? "fcpool.ReservationReference" : "${reservation_references.value.identity_type}pool.ReservationReference"
+      object_type = length(regexall("^(wwnn|wwpn)$", reservation_references.value.identity_type)) > 0 ? "fcpool.ReservationReference" : "${reservation_references.value.identity_type}pool.ReservationReference"
+      reservation_moid = length(regexall("/", reservation_references.value.pool_name)
+        ) > 0 ? local.pools["${reservation_references.value.identity_type}_reservations"]["${reservation_references.value.pool_name}/${reservation_references.value.identity}"
+      ] : local.pools["${reservation_references.value.identity_type}_reservations"]["${each.value.org}/${reservation_references.value.pool_name}/${reservation_references.value.identity}"]
+    }
+  }
+}
+
 resource "intersight_server_profile" "map" {
   depends_on = [
     data.intersight_compute_physical_summary.server,
+    intersight_server_profile.reservations,
     intersight_server_profile_template.map,
     time_sleep.discovery
   ]
@@ -35,7 +75,7 @@ resource "intersight_server_profile" "map" {
   type                = "instance"
   uuid_address_type = length([for v in each.value.policy_bucket : v if length(regexall("uuidpool.Pool", v.object_type)) > 0]
   ) > 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
-  lifecycle { ignore_changes = [action, config_context, mod_time, uuid_lease, scheduled_actions, wait_for_completion] }
+  lifecycle { ignore_changes = [action, config_context, mod_time, reservation_references, scheduled_actions, uuid_lease, wait_for_completion] }
   organization { moid = var.orgs[each.value.org] }
   dynamic "assigned_server" {
     for_each = {
@@ -63,26 +103,6 @@ resource "intersight_server_profile" "map" {
       moid = contains(keys(lookup(local.policies, policy_bucket.value.policy, {})), policy_bucket.value.name
       ) == true ? local.policies[policy_bucket.value.policy][policy_bucket.value.name] : local.policies_data[policy_bucket.value.policy][policy_bucket.value.name].moid
       object_type = policy_bucket.value.object_type
-    }
-  }
-  dynamic "reservation_references" {
-    for_each = { for v in each.value.reservations : v.identity => v }
-    content {
-      additional_properties = length(regexall("^(ip|mac|wwnn|wwpn)$", reservation_references.value.identity_type)
-        ) > 0 ? jsonencode({
-          ConsumerType = reservation_references.value.identity_type == "ip" && length(regexall("band", reservation_references.value.management_type)
-            ) > 0 ? "${title(lower(reservation_references.value.management_type))}${title(lower(reservation_references.value.ip_type))}-Access" : length(
-            regexall("ip", reservation_references.value.identity_type)) > 0 ? "ISCSI" : length(regexall("mac", reservation_references.value.identity_type)) > 0 ? "Vnic" : length(
-            regexall("wwnn", reservation_references.value.identity_type)
-          ) > 0 ? "WWNN" : "Vhba"
-          ConsumerName = length(regexall("band", reservation_references.value.management_type)
-          ) == 0 && reservation_references.value.identity_type != "wwnn" ? reservation_references.value.interface : ""
-      }) : ""
-      class_id    = length(regexall("^(wwnn|wwpn)$", reservation_references.value.identity_type)) > 0 ? "fcpool.ReservationReference" : "${reservation_references.value.identity_type}pool.ReservationReference"
-      object_type = length(regexall("^(wwnn|wwpn)$", reservation_references.value.identity_type)) > 0 ? "fcpool.ReservationReference" : "${reservation_references.value.identity_type}pool.ReservationReference"
-      reservation_moid = length(regexall("/", reservation_references.value.pool_name)
-        ) > 0 ? local.pools["${reservation_references.value.identity_type}_reservations"]["${reservation_references.value.pool_name}/${reservation_references.value.identity}"
-      ] : local.pools["${reservation_references.value.identity_type}_reservations"]["${each.value.org}/${reservation_references.value.pool_name}/${reservation_references.value.identity}"]
     }
   }
   dynamic "src_template" {

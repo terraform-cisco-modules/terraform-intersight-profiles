@@ -14,7 +14,7 @@ resource "intersight_chassis_profile" "map" {
     data.intersight_equipment_chassis.chassis,
     data.intersight_search_search_item.policies,
     data.intersight_search_search_item.pools,
-    intersight_chassis_profile_template.map,
+    #intersight_chassis_profile_template.map,
     time_sleep.discovery
   ]
   for_each        = local.chassis
