@@ -33,17 +33,20 @@ resource "intersight_server_profile" "reservations" {
         ) > 0 ? jsonencode({
           ConsumerType = reservation_references.value.identity_type == "ip" && length(regexall("band", reservation_references.value.management_type)
             ) > 0 ? "${title(lower(reservation_references.value.management_type))}${title(lower(reservation_references.value.ip_type))}-Access" : length(
-            regexall("ip", reservation_references.value.identity_type)) > 0 ? "ISCSI" : length(regexall("mac", reservation_references.value.identity_type)) > 0 ? "Vnic" : length(
+            regexall("ip", reservation_references.value.identity_type)) > 0 ? "ISCSI" : length(
+            regexall("mac", reservation_references.value.identity_type)) > 0 ? "Vnic" : length(
             regexall("wwnn", reservation_references.value.identity_type)
           ) > 0 ? "WWNN" : "Vhba"
           ConsumerName = length(regexall("band", reservation_references.value.management_type)
           ) == 0 && reservation_references.value.identity_type != "wwnn" ? reservation_references.value.interface : ""
       }) : ""
-      class_id    = length(regexall("^(wwnn|wwpn)$", reservation_references.value.identity_type)) > 0 ? "fcpool.ReservationReference" : "${reservation_references.value.identity_type}pool.ReservationReference"
-      object_type = length(regexall("^(wwnn|wwpn)$", reservation_references.value.identity_type)) > 0 ? "fcpool.ReservationReference" : "${reservation_references.value.identity_type}pool.ReservationReference"
-      reservation_moid = length(regexall("/", reservation_references.value.pool_name)
-        ) > 0 ? local.pools["${reservation_references.value.identity_type}_reservations"]["${reservation_references.value.pool_name}/${reservation_references.value.identity}"
-      ] : local.pools["${reservation_references.value.identity_type}_reservations"]["${each.value.org}/${reservation_references.value.pool_name}/${reservation_references.value.identity}"]
+      class_id = length(regexall("^(wwnn|wwpn)$", reservation_references.value.identity_type)
+      ) > 0 ? "fcpool.ReservationReference" : "${reservation_references.value.identity_type}pool.ReservationReference"
+      object_type = length(regexall("^(wwnn|wwpn)$", reservation_references.value.identity_type)
+      ) > 0 ? "fcpool.ReservationReference" : "${reservation_references.value.identity_type}pool.ReservationReference"
+      reservation_moid = local.pools.reservations[reservation_references.value.identity_type][
+        "${reservation_references.value.pool_name}/${reservation_references.value.identity}"
+      ]
     }
   }
 }
@@ -73,6 +76,7 @@ resource "intersight_server_profile" "map" {
   static_uuid_address = each.value.static_uuid_address
   target_platform     = each.value.target_platform
   type                = "instance"
+  user_label          = each.value.user_label
   uuid_address_type = length([for v in each.value.policy_bucket : v if length(regexall("uuidpool.Pool", v.object_type)) > 0]
   ) > 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
   lifecycle { ignore_changes = [action, config_context, mod_time, reservation_references, scheduled_actions, uuid_lease, wait_for_completion] }

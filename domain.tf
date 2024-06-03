@@ -10,13 +10,12 @@ data "intersight_network_element_summary" "fis" {
 }
 
 resource "intersight_fabric_switch_cluster_profile" "map" {
-  #depends_on = [
-  #  intersight_fabric_switch_cluster_profile_template.map
-  #]
+  depends_on  = [intersight_fabric_switch_cluster_profile_template.map]
   for_each    = { for k, v in local.domain : k => v }
   description = lookup(each.value, "description", "${each.value.name} Domain Profile.")
   name        = each.value.name
   type        = "instance"
+  user_label  = each.value.user_label
   organization { moid = var.orgs[each.value.org] }
   dynamic "src_template" {
     for_each = { for v in compact([each.value.ucs_domain_profile_template]) : v => v if each.value.attach_template == true && element(split("/", v), 1) != "UNUSED" }

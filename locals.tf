@@ -1,16 +1,29 @@
 locals {
-  defaults  = yamldecode(file("${path.module}/defaults.yaml"))
-  modelp    = { for org in local.org_keys : org => lookup(var.model[org], "profiles", {}) }
-  modelt    = { for org in local.org_keys : org => lookup(var.model[org], "templates", {}) }
-  org_keys  = sort(keys(var.model))
-  org_names = merge({ for k, v in var.orgs : v => k }, { x_cisco_intersight_internal = "5ddfd9ff6972652d31ee6582" })
+  defaults     = yamldecode(file("${path.module}/defaults.yaml"))
+  modelp       = { for org in local.org_keys : org => lookup(var.model[org], "profiles", {}) }
+  modelt       = { for org in local.org_keys : org => lookup(var.model[org], "templates", {}) }
+  org_keys     = sort(keys(var.model))
+  org_names    = merge({ for k, v in var.orgs : v => k }, { x_cisco_intersight_internal = "5ddfd9ff6972652d31ee6582" })
+  policy_names = [for e in keys(local.bucket) : replace(e, "_policy", "") if length(regexall("_policy", e)) > 0]
   policies = merge(lookup(var.policies, "map", {}), {
-    npfx = { for org in keys(var.orgs) : org => lookup(lookup(lookup(var.policies, "map", {}), "name_prefix", {}), org, local.defaults.policy_prefix) }
-    nsfx = { for org in keys(var.orgs) : org => lookup(lookup(lookup(var.policies, "map", {}), "name_suffix", {}), org, local.defaults.policy_suffix) }
+    npfx = { for org in keys(var.orgs) : org => {
+      for e in local.policy_names : e => lookup(lookup(lookup(lookup(var.model, org, {}), "policies", {}), "name_prefix", {}
+      ), e, lookup(lookup(lookup(lookup(var.model, org, {}), "policies", {}), "name_prefix", local.defaults.policy_prefix), "default", ""))
+    } }
+    nsfx = { for org in keys(var.orgs) : org => {
+      for e in local.policy_names : e => lookup(lookup(lookup(lookup(var.model, org, {}), "policies", {}), "name_suffix", {}
+      ), e, lookup(lookup(lookup(lookup(var.model, org, {}), "policies", {}), "name_suffix", local.defaults.policy_suffix), "default", ""))
+    } }
   })
   pools = merge(lookup(var.pools, "map", {}), {
-    npfx = { for org in keys(var.orgs) : org => lookup(lookup(lookup(var.pools, "map", {}), "name_prefix", {}), org, local.defaults.pool_prefix) }
-    nsfx = { for org in keys(var.orgs) : org => lookup(lookup(lookup(var.pools, "map", {}), "name_suffix", {}), org, local.defaults.pool_suffix) }
+    npfx = { for org in keys(var.orgs) : org => {
+      for e in ["resource", "uuid"] : e => lookup(lookup(lookup(lookup(var.model, org, {}), "pools", {}), "name_prefix", {}
+      ), e, lookup(lookup(lookup(lookup(var.model, org, {}), "pools", {}), "name_prefix", local.defaults.pool_suffix), "default", ""))
+    } }
+    nsfx = { for org in keys(var.orgs) : org => {
+      for e in ["resource", "uuid"] : e => lookup(lookup(lookup(lookup(var.model, org, {}), "pools", {}), "name_suffix", {}
+      ), e, lookup(lookup(lookup(lookup(var.model, org, {}), "pools", {}), "name_suffix", local.defaults.pool_suffix), "default", ""))
+    } }
   })
   ppfx = { for org in local.org_keys : org => {
     for e in local.profile_names : e => lookup(lookup(local.modelp[org], "name_prefix", {}
@@ -376,8 +389,10 @@ locals {
         policy      = local.bucket[e].policy
       } if lookup(v, e, "UNUSED") != "UNUSED" }
       pre_assign = merge(local.profile_server.pre_assign, lookup(i, "pre_assign", {}), { domain_name = lookup(v, "domain_name", "") })
-      reservations = lookup(v, "ignore_reservations", true
-      ) == false ? [for e in lookup(i, "reservations", []) : merge(local.profile_server.reservations, e)] : []
+      reservations = lookup(v, "ignore_reservations", false
+        ) == false ? [for e in lookup(i, "reservations", []) : merge(local.profile_server.reservations, e, {
+          pool_name = length(regexall("/", e.pool_name)) > 0 ? e.pool_name : "${org}/${e.pool_name}"
+      })] : []
       tags = lookup(v, "tags", var.global_settings.tags)
       ucs_server_profile_template = length(compact([lookup(v, "ucs_server_template", "")])) > 0 ? length(regexall("/", lookup(v, "ucs_server_template", "UNUSED"))
         ) > 0 ? v.ucs_server_template : length(compact([lookup(v, "ucs_server_template", "")])) > 0 ? "${org}/${v.ucs_server_template}" : "UNUSED" : length(
