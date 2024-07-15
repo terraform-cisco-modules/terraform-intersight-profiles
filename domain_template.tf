@@ -55,9 +55,7 @@ resource "intersight_bulk_mo_merger" "trigger_domain_profile_update" {
   lifecycle { ignore_changes = all }
   sources {
     object_type = "fabric.SwitchClusterProfileTemplate"
-    moid = contains(keys(local.switch_templates), each.value.ucs_domain_profile_template
-      ) == true ? intersight_fabric_switch_cluster_profile_template.map[each.value.ucs_domain_profile_template
-    ].moid : local.templates_data.ucs_domain_profile_template[each.value.ucs_domain_profile_template].moid
+    moid        = local.ucs_templates.chassis[each.value.ucs_domain_profile_template].moid
   }
   targets {
     object_type = "fabric.SwitchClusterProfile"
@@ -75,9 +73,7 @@ resource "intersight_bulk_mo_merger" "trigger_switch_profile_update" {
   lifecycle { ignore_changes = all }
   sources {
     object_type = "fabric.SwitchProfileTemplate"
-    moid = contains(keys(local.switch_templates), each.value.ucs_switch_profile_template
-      ) == true ? intersight_fabric_switch_profile_template.map[each.value.ucs_switch_profile_template
-    ].moid : local.templates_data.ucs_switch_profile_template[each.value.ucs_switch_profile_template].moid
+    moid        = local.ucs_templates.switch[each.value.ucs_switch_profile_template].moid
   }
   targets {
     object_type = "fabric.SwitchProfile"

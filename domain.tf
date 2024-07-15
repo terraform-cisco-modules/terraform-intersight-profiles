@@ -10,21 +10,20 @@ data "intersight_network_element_summary" "fis" {
 }
 
 resource "intersight_fabric_switch_cluster_profile" "map" {
-  depends_on  = [intersight_fabric_switch_cluster_profile_template.map]
-  for_each    = { for k, v in local.domain : k => v }
+  depends_on = [
+    data.intersight_fabric_switch_cluster_profile_template.map,
+    intersight_fabric_switch_cluster_profile_template.map
+  ]
+  for_each = { for k, v in local.domain : k => v }
+  additional_properties = jsonencode({
+    SrcTemplate = each.value.attach_template == true && each.value.detach_template == false && length(regexall("UNUSED", each.value.ucs_domain_profile_template)
+    ) == 0 ? { Moid = local.ucs_templates.domain[each.value.ucs_domain_profile_template].moid, ObjectType = "fabric.SwitchClusterProfileTemplate" } : null
+  })
   description = lookup(each.value, "description", "${each.value.name} Domain Profile.")
   name        = each.value.name
   type        = "instance"
   user_label  = each.value.user_label
   organization { moid = var.orgs[each.value.org] }
-  dynamic "src_template" {
-    for_each = { for v in compact([each.value.ucs_domain_profile_template]) : v => v if each.value.attach_template == true && element(split("/", v), 1) != "UNUSED" }
-    content {
-      moid = contains(keys(local.domain_template), src_template.value) == true ? intersight_fabric_switch_cluster_profile_template.map[src_template.value
-      ].moid : local.templates_data.ucs_domain_profile_template[src_template.value].moid
-      object_type = "server.ProfileTemplate"
-    }
-  }
   dynamic "tags" {
     for_each = { for v in each.value.tags : v.key => v }
     content {
@@ -41,6 +40,10 @@ resource "intersight_fabric_switch_profile" "map" {
     intersight_fabric_switch_cluster_profile.map
   ]
   for_each = local.switch_profiles
+  additional_properties = jsonencode({
+    SrcTemplate = each.value.attach_template == true && each.value.detach_template == false && length(regexall("UNUSED", each.value.ucs_switch_profile_template)
+    ) == 0 ? { Moid = local.ucs_templates.switch[each.value.ucs_switch_profile_template].moid, ObjectType = "fabric.SwitchProfileTemplate" } : null
+  })
   dynamic "assigned_switch" {
     for_each = { for v in compact([each.value.serial_number]) : v => v if each.value.serial_number != "unknown" }
     content {
@@ -48,14 +51,7 @@ resource "intersight_fabric_switch_profile" "map" {
     }
   }
   description = lookup(each.value, "description", "${each.value.name} Switch Profile.")
-  lifecycle {
-    ignore_changes = [
-      #action,
-      additional_properties,
-      mod_time,
-      #wait_for_completion
-    ]
-  }
+  lifecycle { ignore_changes = [action, additional_properties, mod_time, wait_for_completion] }
   name = each.value.name
   # the following policy_bucket statements map different policies to this
   # template -- the object_type shows the policy type
@@ -69,14 +65,6 @@ resource "intersight_fabric_switch_profile" "map" {
   }
   switch_cluster_profile { moid = intersight_fabric_switch_cluster_profile.map[each.value.domain_profile].moid }
   type = "instance"
-  dynamic "src_template" {
-    for_each = { for v in compact([each.value.ucs_switch_profile_template]) : v => v if each.value.attach_template == true && element(split("/", v), 1) != "UNUSED" }
-    content {
-      moid = contains(keys(local.switch_templates), src_template.value) == true ? intersight_fabric_switch_profile_template.map[src_template.value
-      ].moid : local.templates_data.ucs_switch_profile_template[src_template.value].moid
-      object_type = "server.ProfileTemplate"
-    }
-  }
   dynamic "tags" {
     for_each = each.value.tags
     content {

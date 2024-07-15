@@ -110,13 +110,35 @@ locals {
         moid                  = e.moid
     })
   } }
-  templates_data = { for k in keys(data.intersight_search_search_item.templates) : k => {
-    for e in lookup(data.intersight_search_search_item.templates[k], "results", []
-      ) : "${local.org_names[jsondecode(e.additional_properties).Organization.Moid]}/${jsondecode(e.additional_properties).Name}" => merge({
-        additional_properties = jsondecode(e.additional_properties)
-        moid                  = e.moid
-    })
-  } }
+  #templates_data = { for k in keys(data.intersight_search_search_item.templates) : k => {
+  #  for e in lookup(data.intersight_search_search_item.templates[k], "results", []
+  #    ) : "${local.org_names[jsondecode(e.additional_properties).Organization.Moid]}/${jsondecode(e.additional_properties).Name}" => merge({
+  #      additional_properties = jsondecode(e.additional_properties)
+  #      moid                  = e.moid
+  #  })
+  #} }
+  ucs_templates = {
+    chassis = merge(
+      { for k, v in intersight_chassis_profile_template.map : k => v },
+      { for i in flatten([for k, v in data.intersight_chassis_profile_template.map : [for e in v.results : merge(e, {
+        org = e.organization[0].moid
+    })]]) : "${local.org_names[i.org]}/${i.name}" => i })
+    domain = merge(
+      { for k, v in intersight_fabric_switch_cluster_profile_template.map : k => v },
+      { for i in flatten([for k, v in data.intersight_fabric_switch_cluster_profile_template.map : [for e in v.results : merge(e, {
+        org = e.organization[0].moid
+    })]]) : "${local.org_names[i.org]}/${i.name}" => i })
+    server = merge(
+      { for k, v in intersight_server_profile_template.map : k => v },
+      { for i in flatten([for k, v in data.intersight_server_profile_template.map : [for e in v.results : merge(e, {
+        org = e.organization[0].moid
+    })]]) : "${local.org_names[i.org]}/${i.name}" => i })
+    switch = merge(
+      { for k, v in intersight_fabric_switch_profile_template.map : k => v },
+      { for i in flatten([for k, v in data.intersight_fabric_switch_profile_template.map : [for e in v.results : merge(e, {
+        org = e.organization[0].moid
+    })]]) : "${local.org_names[i.org]}/${i.name}" => i })
+  }
 
   #_________________________________________________________________________________________
   #
@@ -397,7 +419,8 @@ locals {
       ucs_server_profile_template = length(compact([lookup(v, "ucs_server_template", "")])) > 0 ? length(regexall("/", lookup(v, "ucs_server_template", "UNUSED"))
         ) > 0 ? v.ucs_server_template : length(compact([lookup(v, "ucs_server_template", "")])) > 0 ? "${org}/${v.ucs_server_template}" : "UNUSED" : length(
         regexall("/", lookup(v, "ucs_server_profile_template", "UNUSED"))
-      ) > 0 ? v.ucs_server_profile_template : length(compact([lookup(v, "ucs_server_profile_template", "")])) > 0 ? "${org}/${v.ucs_server_profile_template}" : "UNUSED"
+        ) > 0 ? v.ucs_server_profile_template : length(compact([lookup(v, "ucs_server_profile_template", "")])
+      ) > 0 ? "${org}/${v.ucs_server_profile_template}" : "${org}/UNUSED"
     })
   ]] if length(lookup(local.modelp[org], "server", [])) > 0]) : "${d.org}/${d.key}" => d }
   server_loop_2 = { for k, v in local.server_loop_1 : k => merge(v, {
@@ -408,10 +431,16 @@ locals {
     }) }
   }) }
   server = { for k, v in local.server_loop_2 : k => merge(v, {
-    policy_bucket = length(compact([v.ucs_server_profile_template])) > 0 && length(lookup(local.server_template, v.ucs_server_profile_template, {})) > 0 ? merge(
+    policy_bucket = length(regexall("UNUSED", v.ucs_server_profile_template)) == 0 && contains(keys(local.server_template), v.ucs_server_profile_template) ? merge(
     local.server_template[v.ucs_server_profile_template].policy_bucket, v.policy_bucket) : v.policy_bucket
     target_platform = v.attach_template == true && length(lookup(local.server_template, v.ucs_server_profile_template, "")
     ) > 0 ? local.server_template[v.ucs_server_profile_template].target_platform : v.target_platform
+  }) }
+  server_final = { for k, v in local.server : k => merge(v, {
+    uuid_address_type = length(regexall("UNUSED", v.ucs_server_profile_template)
+      ) == 0 ? local.ucs_templates.server[v.ucs_server_profile_template].uuid_address_type : length(regexall("UNUSED", v.uuid_pool)
+    ) == 0 ? "POOL" : length(compact([v.static_uuid_address])) > 0 ? "STATIC" : "NONE"
+    uuid_pool = length(regexall("/", v.uuid_pool)) > 0 ? v.uuid_pool : "${v.org}/${v.uuid_pool}"
   }) }
   server_serial_numbers = compact([for v in local.server : v.serial_number if length(regexall(
   "^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0])

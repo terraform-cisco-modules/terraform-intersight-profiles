@@ -23,7 +23,7 @@ A Terraform module to configure Intersight Infrastructure Profiles.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_intersight"></a> [intersight](#provider\_intersight) | 1.0.49 |
+| <a name="provider_intersight"></a> [intersight](#provider\_intersight) | 1.0.50 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.11.2 |
 ## Inputs
 
@@ -65,10 +65,13 @@ A Terraform module to configure Intersight Infrastructure Profiles.
 | [time_sleep.discovery](https://registry.terraform.io/providers/time/latest/docs/resources/sleep) | resource |
 | [time_sleep.domain](https://registry.terraform.io/providers/time/latest/docs/resources/sleep) | resource |
 | [time_sleep.server](https://registry.terraform.io/providers/time/latest/docs/resources/sleep) | resource |
+| [intersight_chassis_profile_template.map](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/chassis_profile_template) | data source |
 | [intersight_compute_physical_summary.server](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/compute_physical_summary) | data source |
 | [intersight_equipment_chassis.chassis](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/equipment_chassis) | data source |
+| [intersight_fabric_switch_cluster_profile_template.map](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/fabric_switch_cluster_profile_template) | data source |
+| [intersight_fabric_switch_profile_template.map](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/fabric_switch_profile_template) | data source |
 | [intersight_network_element_summary.fis](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/network_element_summary) | data source |
 | [intersight_search_search_item.policies](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 | [intersight_search_search_item.pools](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
-| [intersight_search_search_item.templates](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
+| [intersight_server_profile_template.map](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/server_profile_template) | data source |
 <!-- END_TF_DOCS -->

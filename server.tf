@@ -15,16 +15,15 @@ data "intersight_compute_physical_summary" "server" {
 # GUI Location: Infrastructure Service > Configure > Profiles : UCS Server Profiles
 #_________________________________________________________________________________________
 resource "intersight_server_profile" "reservations" {
-  for_each        = local.server
+  for_each        = local.server_final
   target_platform = each.value.target_platform
   lifecycle { ignore_changes = [
     action, action_params, ancestors, assigned_server, associated_server, associated_server_pool, create_time, description, domain_group_moid,
     mod_time, owners, parent, permission_resources, policy_bucket, running_workflows, scheduled_actions, server_assignment_mode,
-    server_pool, shared_scope, src_template, tags, target_platform, uuid, uuid_address_type, uuid_lease, uuid_pool, version_context
+    server_pool, shared_scope, src_template, tags, target_platform, version_context
   ] }
-  name = each.value.name
-  uuid_address_type = length([for v in each.value.policy_bucket : v if length(regexall("uuidpool.Pool", v.object_type)) > 0]
-  ) > 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
+  name              = each.value.name
+  uuid_address_type = each.value.uuid_address_type
   organization { moid = var.orgs[each.value.org] }
   dynamic "reservation_references" {
     for_each = { for v in each.value.reservations : v.identity => v }
@@ -49,6 +48,16 @@ resource "intersight_server_profile" "reservations" {
       ]
     }
   }
+  dynamic "uuid_pool" {
+    for_each = { for v in [each.value.uuid_pool] : v => v if each.value.uuid_address_type == "POOL" }
+    content {
+      moid = each.value.attach_template == true && length(regexall("UNUSED", each.value.ucs_server_profile_template)
+        ) == 0 ? local.ucs_templates.server[each.value.ucs_server_profile_template].uuid_pool[0].moid : contains(keys(lookup(local.pools, "uuid", {})), uuid_pool.value
+      ) == true ? local.pools.uuid[uuid_pool.value] : local.pools_data.uuid[uuid_pool.value].moid
+      object_type = "uuidpool.Pool"
+    }
+  }
+
 }
 
 resource "intersight_server_profile" "map" {
@@ -58,9 +67,12 @@ resource "intersight_server_profile" "map" {
     intersight_server_profile_template.map,
     time_sleep.discovery
   ]
-  for_each    = { for k, v in local.server : k => v }
-  description = lookup(each.value, "description", "${each.value.name} Server Profile.")
-  name        = each.value.name
+  for_each = { for k, v in local.server_final : k => v }
+  additional_properties = jsonencode({
+    SrcTemplate = each.value.attach_template == true && each.value.detach_template == false && length(regexall("UNUSED", each.value.ucs_server_profile_template)
+    ) == 0 ? { Moid = local.ucs_templates.server[each.value.ucs_server_profile_template].moid, ObjectType = "server.ProfileTemplate" } : null
+  })
+  name = each.value.name
   server_assignment_mode = length(regexall("UNUSED", each.value.resource_pool)) == 0 ? "Pool" : length(regexall(
     "^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
   ) > 0 ? "Static" : "None"
@@ -77,9 +89,10 @@ resource "intersight_server_profile" "map" {
   target_platform     = each.value.target_platform
   type                = "instance"
   user_label          = each.value.user_label
-  uuid_address_type = length([for v in each.value.policy_bucket : v if length(regexall("uuidpool.Pool", v.object_type)) > 0]
-  ) > 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
-  lifecycle { ignore_changes = [action, config_context, mod_time, reservation_references, scheduled_actions, uuid_lease, wait_for_completion] }
+  uuid_address_type   = each.value.uuid_address_type
+  lifecycle { ignore_changes = [
+    action, config_context, description, mod_time, reservation_references, scheduled_actions, src_template, uuid_lease, wait_for_completion
+  ] }
   organization { moid = var.orgs[each.value.org] }
   dynamic "assigned_server" {
     for_each = {
@@ -109,30 +122,11 @@ resource "intersight_server_profile" "map" {
       object_type = policy_bucket.value.object_type
     }
   }
-  dynamic "src_template" {
-    for_each = { for v in compact([each.value.ucs_server_profile_template]) : v => v if each.value.attach_template == true && element(split("/", v), 1) != "UNUSED" }
-    content {
-      moid = contains(keys(local.server_template), src_template.value) == true ? intersight_server_profile_template.map[src_template.value
-      ].moid : local.templates_data.ucs_server_profile_template[src_template.value].moid
-      object_type = "server.ProfileTemplate"
-    }
-  }
   dynamic "tags" {
     for_each = { for v in each.value.tags : v.key => v }
     content {
       key   = tags.value.key
       value = tags.value.value
-    }
-  }
-  dynamic "uuid_pool" {
-    for_each = {
-      for v in each.value.policy_bucket : v.name => v if v.object_type == "uuidpool.Pool" && element(split("/", v.name), 1
-      ) != "UNUSED" && element(split("/", each.value.ucs_server_profile_template), 1) == "UNUSED" && each.value.attach_template == false
-    }
-    content {
-      moid = contains(keys(lookup(local.pools, "uuid", {})), uuid_pool.value.name
-      ) == true ? local.pools.uuid[uuid_pool.value.name] : local.pools_data.uuid[uuid_pool.value.name].moid
-      object_type = "uuidpool.Pool"
     }
   }
 }
@@ -154,10 +148,14 @@ resource "time_sleep" "server" {
 # GUI Location: Infrastructure Service > Configure > Profiles : UCS Server Profiles
 #_________________________________________________________________________________________
 resource "intersight_server_profile" "deploy" {
-  depends_on = [time_sleep.server]
-  for_each   = local.server
+  depends_on = [
+    intersight_server_profile.map,
+    time_sleep.server
+  ]
+  for_each = local.server_final
   action = length(regexall("^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
   ) > 0 ? each.value.action : "No-op"
+  description     = coalesce(each.value.description, "${each.value.name} Server Profile")
   target_platform = each.value.target_platform
   dynamic "scheduled_actions" {
     for_each = { for v in ["activate"] : v => v if length(regexall("^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
@@ -169,12 +167,11 @@ resource "intersight_server_profile" "deploy" {
     }
   }
   lifecycle { ignore_changes = [
-    action_params, ancestors, assigned_server, associated_server, associated_server_pool, create_time, description, domain_group_moid,
+    action_params, ancestors, assigned_server, associated_server, associated_server_pool, create_time, domain_group_moid,
     mod_time, owners, parent, permission_resources, policy_bucket, reservation_references, running_workflows, server_assignment_mode,
     server_pool, shared_scope, src_template, tags, target_platform, uuid, uuid_address_type, uuid_lease, uuid_pool, version_context
   ] }
-  name = each.value.name
-  uuid_address_type = length([for v in each.value.policy_bucket : v if length(regexall("uuidpool.Pool", v.object_type)) > 0]
-  ) > 0 ? "POOL" : length(compact([each.value.static_uuid_address])) > 0 ? "STATIC" : "NONE"
+  name              = each.value.name
+  uuid_address_type = each.value.uuid_address_type
   organization { moid = var.orgs[each.value.org] }
 }

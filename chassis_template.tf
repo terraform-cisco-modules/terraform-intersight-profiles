@@ -38,9 +38,7 @@ resource "intersight_bulk_mo_merger" "trigger_chassis_profile_update" {
   lifecycle { ignore_changes = all }
   sources {
     object_type = "chassis.ProfileTemplate"
-    moid = contains(keys(local.chassis_template), each.value.ucs_chassis_profile_template
-      ) == true ? intersight_chassis_profile_template.map[each.value.ucs_chassis_profile_template
-    ].moid : local.templates_data.ucs_chassis_profile_template[each.value.ucs_chassis_profile_template].moid
+    moid        = local.ucs_templates.chassis[each.value.ucs_chassis_profile_template].moid
   }
   targets {
     object_type = "chassis.Profile"
