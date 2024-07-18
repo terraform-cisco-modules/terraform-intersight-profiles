@@ -15,6 +15,7 @@ data "intersight_compute_physical_summary" "server" {
 # GUI Location: Infrastructure Service > Configure > Profiles : UCS Server Profiles
 #_________________________________________________________________________________________
 resource "intersight_server_profile" "reservations" {
+  depends_on      = [intersight_server_profile_template.map]
   for_each        = local.server_final
   target_platform = each.value.target_platform
   lifecycle { ignore_changes = [
@@ -49,22 +50,18 @@ resource "intersight_server_profile" "reservations" {
     }
   }
   dynamic "uuid_pool" {
-    for_each = { for v in [each.value.uuid_pool] : v => v if each.value.uuid_address_type == "POOL" }
+    for_each = { for v in [each.value.uuid_pool] : v => v if length(regexall("UNUSED", v)) == 0 }
     content {
-      moid = each.value.attach_template == true && length(regexall("UNUSED", each.value.ucs_server_profile_template)
-        ) == 0 ? local.ucs_templates.server[each.value.ucs_server_profile_template].uuid_pool[0].moid : contains(keys(lookup(local.pools, "uuid", {})), uuid_pool.value
-      ) == true ? local.pools.uuid[uuid_pool.value] : local.pools_data.uuid[uuid_pool.value].moid
+      moid        = uuid_pool.value
       object_type = "uuidpool.Pool"
     }
   }
-
 }
 
 resource "intersight_server_profile" "map" {
   depends_on = [
     data.intersight_compute_physical_summary.server,
     intersight_server_profile.reservations,
-    intersight_server_profile_template.map,
     time_sleep.discovery
   ]
   for_each = { for k, v in local.server_final : k => v }
@@ -148,11 +145,8 @@ resource "time_sleep" "server" {
 # GUI Location: Infrastructure Service > Configure > Profiles : UCS Server Profiles
 #_________________________________________________________________________________________
 resource "intersight_server_profile" "deploy" {
-  depends_on = [
-    intersight_server_profile.map,
-    time_sleep.server
-  ]
-  for_each = local.server_final
+  depends_on = [time_sleep.server]
+  for_each   = local.server_final
   action = length(regexall("^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
   ) > 0 ? each.value.action : "No-op"
   description     = coalesce(each.value.description, "${each.value.name} Server Profile")

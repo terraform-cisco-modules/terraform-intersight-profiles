@@ -13,7 +13,7 @@ resource "intersight_server_profile_template" "map" {
   description       = lookup(each.value, "description", "${each.value.name} Server Profile Template.")
   name              = each.value.name
   target_platform   = each.value.target_platform
-  uuid_address_type = length(regexall("UNUSED", each.value.uuid_pool)) == 0 && length(compact([each.value.uuid_pool])) > 0 ? "POOL" : "NONE"
+  uuid_address_type = each.value.uuid_address_type
   lifecycle { ignore_changes = [action, config_context, description, mod_time] }
   organization { moid = var.orgs[each.value.org] }
   dynamic "policy_bucket" {
@@ -42,19 +42,34 @@ resource "intersight_server_profile_template" "map" {
 }
 
 resource "intersight_bulk_mo_merger" "trigger_profile_update" {
-  depends_on   = [intersight_server_profile.map]
-  for_each     = { for k, v in local.server_final : k => v if v.attach_template == true && v.detach_template == false }
+  depends_on = [intersight_server_profile.map]
+  for_each   = { for k, v in local.server_final : k => v if v.attach_template == true && v.detach_template == false }
+  #additional_properties = jsonencode({
+  #  #Sources = [{
+  #  #  ClassId    = "server.ProfileTemplate"
+  #  #  Moid       = local.ucs_templates.server[each.value.ucs_server_profile_template].moid
+  #  #  ObjectType = "server.ProfileTemplate"
+  #  #}]
+  #  Targets = [{
+  #    ClassId    = "server.Profile"
+  #    Moid       = local.ucs_templates.server[each.value.ucs_server_profile_template].moid
+  #    ObjectType = "server.Profile"
+  #  }]
+  #})
+  class_id     = "bulk.MoMerger"
   merge_action = "Merge"
   lifecycle { ignore_changes = all }
   sources {
-    object_type = "server.ProfileTemplate"
+    class_id    = "server.ProfileTemplate"
     moid        = local.ucs_templates.server[each.value.ucs_server_profile_template].moid
+    object_type = "server.ProfileTemplate"
     #moid = contains(keys(local.server_template), each.value.ucs_server_profile_template
     #  ) == true ? intersight_server_profile_template.map[each.value.ucs_server_profile_template
     #].moid : local.templates_data.ucs_server_profile_template[each.value.ucs_server_profile_template].moid
   }
   targets {
-    object_type = "server.Profile"
+    class_id    = "server.Profile"
     moid        = intersight_server_profile.map[each.key].moid
+    object_type = "server.Profile"
   }
 }

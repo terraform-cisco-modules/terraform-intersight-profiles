@@ -171,6 +171,7 @@ profiles:
     ucs_server_profile_template: ''
     ucs_server_template: ''
     user_label: ''
+    uuid_pool: UNUSED
 policy_bucket_chassis:
     imc_access_policy: UNUSED
     power_policy: UNUSED
@@ -195,7 +196,6 @@ policy_bucket_domain:
     switch_control_policy: UNUSED
     syslog_policy: UNUSED
     system_qos_policy: UNUSED
-    resource_pool: UNUSED
 policy_bucket_server:
     resource_pool: UNUSED
     #===========================

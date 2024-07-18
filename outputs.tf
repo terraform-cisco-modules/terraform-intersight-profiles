@@ -2,7 +2,6 @@
 #
 # Data Object Outputs
 #__________________________________________________________
-
 output "data" {
   description = "Moid's of the Policies/Pools/Templates that were not defined locally."
   value = {
@@ -15,7 +14,6 @@ output "data" {
 #
 # UCS Profiles Outputs
 #__________________________________________________________
-
 output "profiles" {
   description = "Moids of the Chassis/Domain/Server Profiles."
   value = {
@@ -32,7 +30,6 @@ output "profiles" {
 #
 # UCS Templates Outputs
 #__________________________________________________________
-
 output "templates" {
   description = "Moids of the Chassis/Domain/Server Profiles Templates."
   value = {
@@ -43,4 +40,8 @@ output "templates" {
     }
     server = { for k, v in local.ucs_templates.server : k => v.moid }
   }
+}
+
+output "zvvv" {
+  value = local.server_final
 }
