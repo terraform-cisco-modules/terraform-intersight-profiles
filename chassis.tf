@@ -11,18 +11,18 @@ data "intersight_equipment_chassis" "chassis" {
 
 resource "intersight_chassis_profile" "map" {
   depends_on = [
-    # data.intersight_chassis_profile_template.map,
+    data.intersight_chassis_profile_template.map,
     data.intersight_equipment_chassis.chassis,
     data.intersight_search_search_item.policies,
     data.intersight_search_search_item.pools,
-    # intersight_chassis_profile_template.map,
+    intersight_chassis_profile_template.map,
     time_sleep.discovery
   ]
   for_each = local.chassis
-  #additional_properties = jsonencode({
-  #  SrcTemplate = each.value.attach_template == true && each.value.detach_template == false && length(regexall("UNUSED", each.value.ucs_chassis_profile_template)
-  #  ) == 0 ? { Moid = local.ucs_templates.chassis[each.value.ucs_chassis_profile_template].moid, ObjectType = "chassis.ProfileTemplate" } : null
-  #})
+  additional_properties = jsonencode({
+    SrcTemplate = each.value.attach_template == true && each.value.detach_template == false && length(regexall("UNUSED", each.value.ucs_chassis_profile_template)
+    ) == 0 ? { Moid = local.ucs_templates.chassis[each.value.ucs_chassis_profile_template].moid, ObjectType = "chassis.ProfileTemplate" } : null
+  })
   description     = lookup(each.value, "description", "${each.value.name} Chassis Profile.")
   name            = each.value.name
   target_platform = each.value.target_platform

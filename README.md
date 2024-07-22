@@ -17,14 +17,14 @@ A Terraform module to configure Intersight Infrastructure Profiles.
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >=1.3.0 |
-| <a name="requirement_intersight"></a> [intersight](#requirement\_intersight) | >=1.0.47 |
+| <a name="requirement_intersight"></a> [intersight](#requirement\_intersight) | >=1.0.50 |
 | <a name="requirement_time"></a> [time](#requirement\_time) | >=0.9.1 |
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_intersight"></a> [intersight](#provider\_intersight) | >=1.0.47 |
-| <a name="provider_time"></a> [time](#provider\_time) | >=0.9.1 |
+| <a name="provider_intersight"></a> [intersight](#provider\_intersight) | 1.0.50 |
+| <a name="provider_time"></a> [time](#provider\_time) | 0.11.2 |
 ## Inputs
 
 | Name | Description | Type | Default | Required |
@@ -45,12 +45,18 @@ A Terraform module to configure Intersight Infrastructure Profiles.
 
 | Name | Type |
 |------|------|
+| [intersight_bulk_mo_merger.trigger_chassis_profile_update](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/bulk_mo_merger) | resource |
+| [intersight_bulk_mo_merger.trigger_domain_profile_update](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/bulk_mo_merger) | resource |
 | [intersight_bulk_mo_merger.trigger_profile_update](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/bulk_mo_merger) | resource |
+| [intersight_bulk_mo_merger.trigger_switch_profile_update](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/bulk_mo_merger) | resource |
 | [intersight_chassis_profile.deploy](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/chassis_profile) | resource |
 | [intersight_chassis_profile.map](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/chassis_profile) | resource |
+| [intersight_chassis_profile_template.map](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/chassis_profile_template) | resource |
 | [intersight_fabric_switch_cluster_profile.map](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/fabric_switch_cluster_profile) | resource |
+| [intersight_fabric_switch_cluster_profile_template.map](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/fabric_switch_cluster_profile_template) | resource |
 | [intersight_fabric_switch_profile.deploy](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/fabric_switch_profile) | resource |
 | [intersight_fabric_switch_profile.map](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/fabric_switch_profile) | resource |
+| [intersight_fabric_switch_profile_template.map](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/fabric_switch_profile_template) | resource |
 | [intersight_server_profile.deploy](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/server_profile) | resource |
 | [intersight_server_profile.map](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/server_profile) | resource |
 | [intersight_server_profile.reservations](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/resources/server_profile) | resource |
@@ -59,8 +65,11 @@ A Terraform module to configure Intersight Infrastructure Profiles.
 | [time_sleep.discovery](https://registry.terraform.io/providers/time/latest/docs/resources/sleep) | resource |
 | [time_sleep.domain](https://registry.terraform.io/providers/time/latest/docs/resources/sleep) | resource |
 | [time_sleep.server](https://registry.terraform.io/providers/time/latest/docs/resources/sleep) | resource |
+| [intersight_chassis_profile_template.map](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/chassis_profile_template) | data source |
 | [intersight_compute_physical_summary.server](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/compute_physical_summary) | data source |
 | [intersight_equipment_chassis.chassis](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/equipment_chassis) | data source |
+| [intersight_fabric_switch_cluster_profile_template.map](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/fabric_switch_cluster_profile_template) | data source |
+| [intersight_fabric_switch_profile_template.map](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/fabric_switch_profile_template) | data source |
 | [intersight_network_element_summary.fis](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/network_element_summary) | data source |
 | [intersight_search_search_item.policies](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
 | [intersight_search_search_item.pools](https://registry.terraform.io/providers/CiscoDevNet/intersight/latest/docs/data-sources/search_search_item) | data source |
