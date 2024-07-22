@@ -111,7 +111,7 @@ locals {
         additional_properties = jsondecode(e.additional_properties)
         moid                  = e.moid
     })
-    } }
+  } }
   ucs_templates = {
     chassis = merge(
       { for k, v in intersight_chassis_profile_template.map : k => v },

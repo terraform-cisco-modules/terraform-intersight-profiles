@@ -19,18 +19,18 @@ data "intersight_search_search_item" "pools" {
   )
 }
 
-data "intersight_chassis_profile_template" "map" {
-  for_each = { for v in local.data_templates.ucs_chassis_profile_template : v => v }
-  name     = each.value
-}
-data "intersight_fabric_switch_cluster_profile_template" "map" {
-  for_each = { for v in local.data_templates.ucs_domain_profile_template : v => v }
-  name     = each.value
-}
-data "intersight_fabric_switch_profile_template" "map" {
-  for_each = { for v in local.data_templates.ucs_switch_profile_template : v => v }
-  name     = each.value
-}
+#data "intersight_chassis_profile_template" "map" {
+#  for_each = { for v in local.data_templates.ucs_chassis_profile_template : v => v }
+#  name     = each.value
+#}
+#data "intersight_fabric_switch_cluster_profile_template" "map" {
+#  for_each = { for v in local.data_templates.ucs_domain_profile_template : v => v }
+#  name     = each.value
+#}
+#data "intersight_fabric_switch_profile_template" "map" {
+#  for_each = { for v in local.data_templates.ucs_switch_profile_template : v => v }
+#  name     = each.value
+#}
 data "intersight_server_profile_template" "map" {
   for_each = { for v in local.data_templates.ucs_server_profile_template : v => v }
   name     = each.value
