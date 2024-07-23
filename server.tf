@@ -93,7 +93,7 @@ resource "intersight_server_profile" "map" {
   organization { moid = var.orgs[each.value.org] }
   dynamic "assigned_server" {
     for_each = {
-      for v in compact([each.value.serial_number]) : v => v if each.value.resource_pool == "UNUSED" && length(
+      for v in compact([each.value.serial_number]) : v => v if length(regexall("UNUSED", each.value.resource_pool)) != 0 && length(
         regexall("^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", each.value.serial_number)
       ) > 0
     }

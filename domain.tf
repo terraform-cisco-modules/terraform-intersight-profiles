@@ -10,15 +10,15 @@ data "intersight_network_element_summary" "fis" {
 }
 
 resource "intersight_fabric_switch_cluster_profile" "map" {
-  depends_on = [
-    data.intersight_fabric_switch_cluster_profile_template.map,
-    intersight_fabric_switch_cluster_profile_template.map
-  ]
+  #depends_on = [
+  #  data.intersight_fabric_switch_cluster_profile_template.map,
+  #  intersight_fabric_switch_cluster_profile_template.map
+  #]
   for_each = { for k, v in local.domain : k => v }
-  additional_properties = jsonencode({
-    SrcTemplate = each.value.attach_template == true && each.value.detach_template == false && length(regexall("UNUSED", each.value.ucs_domain_profile_template)
-    ) == 0 ? { Moid = local.ucs_templates.domain[each.value.ucs_domain_profile_template].moid, ObjectType = "fabric.SwitchClusterProfileTemplate" } : null
-  })
+  #additional_properties = jsonencode({
+  #  SrcTemplate = each.value.attach_template == true && each.value.detach_template == false && length(regexall("UNUSED", each.value.ucs_domain_profile_template)
+  #  ) == 0 ? { Moid = local.ucs_templates.domain[each.value.ucs_domain_profile_template].moid, ObjectType = "fabric.SwitchClusterProfileTemplate" } : null
+  #})
   description = lookup(each.value, "description", "${each.value.name} Domain Profile.")
   name        = each.value.name
   type        = "instance"
@@ -40,10 +40,10 @@ resource "intersight_fabric_switch_profile" "map" {
     intersight_fabric_switch_cluster_profile.map
   ]
   for_each = local.switch_profiles
-  additional_properties = jsonencode({
-    SrcTemplate = each.value.attach_template == true && each.value.detach_template == false && length(regexall("UNUSED", each.value.ucs_switch_profile_template)
-    ) == 0 ? { Moid = local.ucs_templates.switch[each.value.ucs_switch_profile_template].moid, ObjectType = "fabric.SwitchProfileTemplate" } : null
-  })
+  #additional_properties = jsonencode({
+  #  SrcTemplate = each.value.attach_template == true && each.value.detach_template == false && length(regexall("UNUSED", each.value.ucs_switch_profile_template)
+  #  ) == 0 ? { Moid = local.ucs_templates.switch[each.value.ucs_switch_profile_template].moid, ObjectType = "fabric.SwitchProfileTemplate" } : null
+  #})
   dynamic "assigned_switch" {
     for_each = { for v in compact([each.value.serial_number]) : v => v if each.value.serial_number != "unknown" }
     content {

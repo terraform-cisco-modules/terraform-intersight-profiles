@@ -113,26 +113,26 @@ locals {
     })
   } }
   ucs_templates = {
-    chassis = merge(
-      { for k, v in intersight_chassis_profile_template.map : k => v },
-      { for i in flatten([for k, v in data.intersight_chassis_profile_template.map : [for e in v.results : merge(e, {
-        org = e.organization[0].moid
-    })]]) : "${local.org_names[i.org]}/${i.name}" => i })
-    domain = merge(
-      { for k, v in intersight_fabric_switch_cluster_profile_template.map : k => v },
-      { for i in flatten([for k, v in data.intersight_fabric_switch_cluster_profile_template.map : [for e in v.results : merge(e, {
-        org = e.organization[0].moid
-    })]]) : "${local.org_names[i.org]}/${i.name}" => i })
+    #chassis = merge(
+    #  { for k, v in intersight_chassis_profile_template.map : k => v },
+    #  { for i in flatten([for k, v in data.intersight_chassis_profile_template.map : [for e in v.results : merge(e, {
+    #    org = e.organization[0].moid
+    #})]]) : "${local.org_names[i.org]}/${i.name}" => i })
+    #domain = merge(
+    #  { for k, v in intersight_fabric_switch_cluster_profile_template.map : k => v },
+    #  { for i in flatten([for k, v in data.intersight_fabric_switch_cluster_profile_template.map : [for e in v.results : merge(e, {
+    #    org = e.organization[0].moid
+    #})]]) : "${local.org_names[i.org]}/${i.name}" => i })
     server = merge(
       { for k, v in intersight_server_profile_template.map : k => v },
       { for i in flatten([for k, v in data.intersight_server_profile_template.map : [for e in v.results : merge(e, {
         org = e.organization[0].moid
     })]]) : "${local.org_names[i.org]}/${i.name}" => i })
-    switch = merge(
-      { for k, v in intersight_fabric_switch_profile_template.map : k => v },
-      { for i in flatten([for k, v in data.intersight_fabric_switch_profile_template.map : [for e in v.results : merge(e, {
-        org = e.organization[0].moid
-    })]]) : "${local.org_names[i.org]}/${i.name}" => i })
+    #switch = merge(
+    #  { for k, v in intersight_fabric_switch_profile_template.map : k => v },
+    #  { for i in flatten([for k, v in data.intersight_fabric_switch_profile_template.map : [for e in v.results : merge(e, {
+    #    org = e.organization[0].moid
+    #})]]) : "${local.org_names[i.org]}/${i.name}" => i })
   }
 
   #_________________________________________________________________________________________
