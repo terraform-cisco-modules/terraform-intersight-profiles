@@ -19,26 +19,19 @@ data "intersight_search_search_item" "pools" {
   )
 }
 
-#data "intersight_chassis_profile_template" "map" {
-#  for_each = { for v in local.data_templates.ucs_chassis_profile_template : v => v }
-#  name     = each.value
-#}
-#data "intersight_fabric_switch_cluster_profile_template" "map" {
-#  for_each = { for v in local.data_templates.ucs_domain_profile_template : v => v }
-#  name     = each.value
-#}
-#data "intersight_fabric_switch_profile_template" "map" {
-#  for_each = { for v in local.data_templates.ucs_switch_profile_template : v => v }
-#  name     = each.value
-#}
+data "intersight_chassis_profile_template" "map" {
+  for_each = { for v in local.data_templates.ucs_chassis_profile_template : v => v }
+  name     = each.value
+}
+data "intersight_fabric_switch_cluster_profile_template" "map" {
+  for_each = { for v in local.data_templates.ucs_domain_profile_template : v => v }
+  name     = each.value
+}
+data "intersight_fabric_switch_profile_template" "map" {
+  for_each = { for v in local.data_templates.ucs_switch_profile_template : v => v }
+  name     = each.value
+}
 data "intersight_server_profile_template" "map" {
   for_each = { for v in local.data_templates.ucs_server_profile_template : v => v }
   name     = each.value
 }
-#data "intersight_search_search_item" "templates" {
-#  for_each = { for v in local.template_types : v => v if length(compact(local.data_templates[v])) > 0 }
-#  additional_properties = jsonencode(
-#    { "ClassId" = "${local.bucket[each.key].object_type}' and Name in ('${trim(join("', '", local.data_templates[each.key]), ", '")
-#    }') and ObjectType eq '${local.bucket[each.key].object_type}" }
-#  )
-#}

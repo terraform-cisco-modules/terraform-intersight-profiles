@@ -33,11 +33,11 @@ output "profiles" {
 output "templates" {
   description = "Moids of the Chassis/Domain/Server Profiles Templates."
   value = {
-    #chassis = { for k, v in local.ucs_templates.chassis : k => v.moid }
-    #domain = {
-    #  domain = { for k, v in local.ucs_templates.domain : k => v.moid }
-    #  switch = { for k, v in local.ucs_templates.switch : k => v.moid }
-    #}
+    chassis = { for k, v in local.ucs_templates.chassis : k => v.moid }
+    domain = {
+      domain = { for k, v in local.ucs_templates.domain : k => v.moid }
+      switch = { for k, v in local.ucs_templates.switch : k => v.moid }
+    }
     server = { for k, v in local.ucs_templates.server : k => v.moid }
   }
 }
