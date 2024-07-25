@@ -105,13 +105,13 @@ locals {
         moid                  = e.moid
     })
   } }
-  pools_data = { for k in keys(data.intersight_search_search_item.pools) : k => {
-    for e in lookup(data.intersight_search_search_item.pools[k], "results", []
+  pools_data = { for k in ["resource", "uuid"] : k => merge({
+    for e in lookup(lookup(data.intersight_search_search_item.pools, k, {}), "results", []
       ) : "${local.org_names[jsondecode(e.additional_properties).Organization.Moid]}/${jsondecode(e.additional_properties).Name}" => merge({
         additional_properties = jsondecode(e.additional_properties)
         moid                  = e.moid
     })
-  } }
+  }, { for e in keys(lookup(local.pools, k, {})) : e => { moid = local.pools[k][e] } }) }
   ucs_templates = {
     #chassis = merge(
     #  { for k, v in intersight_chassis_profile_template.map : k => v },
@@ -434,17 +434,15 @@ locals {
     ) > 0 ? "${local.pools.npfx[v.org].resource}${v.resource_pool}${local.pools.nsfx[v.org].resource}" : "${v.org}/${local.pools.npfx[v.org].resource}${v.resource_pool}${local.pools.nsfx[v.org].resource}"
     target_platform = v.attach_template == true && length(lookup(local.server_template, v.ucs_server_profile_template, "")
     ) > 0 ? local.server_template[v.ucs_server_profile_template].target_platform : v.target_platform
-    uuid_pool = length(regexall("/", v.uuid_pool)
-    ) > 0 ? "${local.pools.npfx[v.org].uuid}${v.uuid_pool}${local.pools.nsfx[v.org].uuid}" : "${v.org}/${local.pools.npfx[v.org].uuid}${v.uuid_pool}${local.pools.nsfx[v.org].uuid}"
   }) }
+  udefault = { name = "default/UNUSED", object_type = "uuidpool.Pool", org = "default", policy = "uuid" }
   server_final = { for k, v in local.server : k => merge(v, {
-    uuid_address_type = length(compact([v.static_uuid_address])
-      ) > 0 ? "STATIC" : v.attach_template == true && length(regexall("UNUSED", v.ucs_server_profile_template)
-      ) == 0 ? local.ucs_templates.server[v.ucs_server_profile_template].uuid_address_type : length(regexall("UNUSED", lookup(v, "uuid_pool", "UNUSED"))
+    uuid_address_type = length(compact([v.static_uuid_address])) > 0 ? "STATIC" : v.attach_template == true && length(regexall("UNUSED", v.ucs_server_profile_template)
+      ) == 0 ? local.ucs_templates.server[v.ucs_server_profile_template].uuid_address_type : length(regexall("UNUSED", lookup(
+      v.policy_bucket, "uuidpoolPool", local.udefault).name)
     ) == 0 ? "POOL" : "NONE"
     uuid_pool = v.attach_template == true && length(regexall("UNUSED", v.ucs_server_profile_template)
-      ) == 0 ? local.ucs_templates.server[v.ucs_server_profile_template].uuid_pool[0].moid : length(regexall("UNUSED", v.uuid_pool)
-    ) == 0 ? local.pools.uuid[v.uuid_pool] : "UNUSED"
+    ) == 0 ? local.ucs_templates.server[v.ucs_server_profile_template].uuid_pool[0].moid : lookup(v.policy_bucket, "uuidpoolPool", local.udefault).name
   }) }
   server_serial_numbers = compact([for v in local.server : v.serial_number if length(regexall(
   "^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0])

@@ -52,7 +52,7 @@ resource "intersight_server_profile" "reservations" {
   dynamic "uuid_pool" {
     for_each = { for v in [each.value.uuid_pool] : v => v if length(regexall("UNUSED", v)) == 0 }
     content {
-      moid        = uuid_pool.value
+      moid        = each.value.attach_template == true ? uuid_pool.value : local.pools_data.uuid[uuid_pool.value].moid
       object_type = "uuidpool.Pool"
     }
   }
@@ -111,8 +111,8 @@ resource "intersight_server_profile" "map" {
     }
   }
   dynamic "policy_bucket" {
-    for_each = { for v in each.value.policy_bucket : v.object_type => v if length(regexall("pool", v.object_type)) == 0 && element(split("/", v.name), 1
-    ) != "UNUSED" && element(split("/", each.value.ucs_server_profile_template), 1) == "UNUSED" && each.value.attach_template == false }
+    for_each = { for v in each.value.policy_bucket : v.object_type => v if length(regexall("pool", v.object_type)
+    ) == 0 && element(split("/", v.name), 1) != "UNUSED" && each.value.attach_template == false }
     content {
       moid = contains(keys(lookup(local.policies, policy_bucket.value.policy, {})), policy_bucket.value.name
       ) == true ? local.policies[policy_bucket.value.policy][policy_bucket.value.name] : local.policies_data[policy_bucket.value.policy][policy_bucket.value.name].moid
