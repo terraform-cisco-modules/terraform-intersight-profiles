@@ -44,18 +44,6 @@ resource "intersight_server_profile_template" "map" {
 resource "intersight_bulk_mo_merger" "trigger_profile_update" {
   depends_on = [intersight_server_profile.map]
   for_each   = { for k, v in local.server_final : k => v if v.attach_template == true && v.detach_template == false }
-  #additional_properties = jsonencode({
-  #  #Sources = [{
-  #  #  ClassId    = "server.ProfileTemplate"
-  #  #  Moid       = local.ucs_templates.server[each.value.ucs_server_profile_template].moid
-  #  #  ObjectType = "server.ProfileTemplate"
-  #  #}]
-  #  Targets = [{
-  #    ClassId    = "server.Profile"
-  #    Moid       = local.ucs_templates.server[each.value.ucs_server_profile_template].moid
-  #    ObjectType = "server.Profile"
-  #  }]
-  #})
   class_id     = "bulk.MoMerger"
   merge_action = "Merge"
   lifecycle { ignore_changes = all }
@@ -63,9 +51,6 @@ resource "intersight_bulk_mo_merger" "trigger_profile_update" {
     class_id    = "server.ProfileTemplate"
     moid        = local.ucs_templates.server[each.value.ucs_server_profile_template].moid
     object_type = "server.ProfileTemplate"
-    #moid = contains(keys(local.server_template), each.value.ucs_server_profile_template
-    #  ) == true ? intersight_server_profile_template.map[each.value.ucs_server_profile_template
-    #].moid : local.templates_data.ucs_server_profile_template[each.value.ucs_server_profile_template].moid
   }
   targets {
     class_id    = "server.Profile"
