@@ -87,10 +87,10 @@ locals {
   ))), ["UNUSED"]) }
   policy_types = distinct(concat([for e in keys(local.pba) : e if length(regexall("resource|uuid", e)) == 0], [for e in keys(local.pbb) : e]))
   pool_types   = ["resource", "uuid"]
-  data_policies = { for e in local.policy_types : e => distinct(concat(flatten([contains(keys(local.pba), e) == true ? [
+  data_policies = { for e in local.policy_types : e => setsubtract(distinct(concat(flatten([contains(keys(local.pba), e) == true ? [
     for v in local.pba[e] : element(split("/", v), 1) if contains(keys(lookup(local.policies, e, {})), v) == false] : []]), flatten([
     contains(keys(local.pbb), e) == true ? [for v in local.pbb[e] : element(split("/", v), 1) if contains(keys(lookup(local.policies, e, {})), v) == false
-  ] : []]))) }
+  ] : []]))), ["UNUSED"]) }
   data_pools = { for e in local.pool_types : e => [for v in local.pba[e] : element(split("/", v), 1
   ) if contains(keys(lookup(local.pools, e, {})), v) == false] }
   data_templates = { for e in local.template_types : e => distinct([for k, v in local.profiles[element(split("_", e), 1)] : element(split("/", v[e]), 1
