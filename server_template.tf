@@ -42,8 +42,8 @@ resource "intersight_server_profile_template" "map" {
 }
 
 resource "intersight_bulk_mo_merger" "trigger_profile_update" {
-  depends_on = [intersight_server_profile.map]
-  for_each   = { for k, v in local.server_final : k => v if v.attach_template == true && v.detach_template == false }
+  depends_on   = [intersight_server_profile.map]
+  for_each     = { for k, v in local.server_final : k => v if v.attach_template == true && v.detach_template == false }
   class_id     = "bulk.MoMerger"
   merge_action = "Merge"
   lifecycle { ignore_changes = all }
