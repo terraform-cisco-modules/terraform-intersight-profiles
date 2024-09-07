@@ -23,8 +23,8 @@ A Terraform module to configure Intersight Infrastructure Profiles.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_time"></a> [time](#provider\_time) | 0.12.0 |
 | <a name="provider_intersight"></a> [intersight](#provider\_intersight) | 1.0.51 |
+| <a name="provider_time"></a> [time](#provider\_time) | 0.12.0 |
 ## Inputs
 
 | Name | Description | Type | Default | Required |
