@@ -15,7 +15,12 @@ data "intersight_compute_physical_summary" "server" {
 # GUI Location: Infrastructure Service > Configure > Profiles : UCS Server Profiles
 #_________________________________________________________________________________________
 resource "intersight_server_profile" "reservations" {
-  depends_on      = [intersight_server_profile_template.map]
+  depends_on      = [
+    data.intersight_compute_physical_summary.server,
+    intersight_chassis_profile.deploy,
+    intersight_server_profile_template.map,
+    time_sleep.discovery
+  ]
   for_each        = local.server_final
   target_platform = each.value.target_platform
   lifecycle { ignore_changes = [
@@ -60,9 +65,7 @@ resource "intersight_server_profile" "reservations" {
 
 resource "intersight_server_profile" "map" {
   depends_on = [
-    data.intersight_compute_physical_summary.server,
     intersight_server_profile.reservations,
-    time_sleep.discovery
   ]
   for_each = { for k, v in local.server_final : k => v }
   additional_properties = jsonencode({

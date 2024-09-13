@@ -16,7 +16,9 @@ resource "intersight_chassis_profile" "map" {
     data.intersight_search_search_item.policies,
     data.intersight_search_search_item.pools,
     intersight_chassis_profile_template.map,
-    time_sleep.discovery
+    intersight_fabric_switch_profile.deploy,
+    time_sleep.discovery,
+    time_sleep.domain
   ]
   for_each = local.chassis
   additional_properties = jsonencode({
