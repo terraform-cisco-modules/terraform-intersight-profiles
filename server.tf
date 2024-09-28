@@ -137,9 +137,9 @@ resource "intersight_server_profile" "map" {
 #_________________________________________________________________________________________
 resource "time_sleep" "server" {
   depends_on      = [intersight_bulk_mo_merger.trigger_profile_update]
-  for_each        = { for v in ["wait_for_validation_2m"] : v => v if length(local.switch_profiles) > 0 }
-  create_duration = length([for k, v in local.switch_profiles : 1 if v.action == "Deploy"]) > 0 ? "2m" : "1s"
-  triggers        = { always_run = length(local.wait_for_domain) > 0 ? timestamp() : 1 }
+  for_each        = { for v in ["wait_for_validation_2m"] : v => v if length(local.server_final) > 0 }
+  create_duration = length([for k, v in local.server_final : 1 if v.action == "Deploy"]) > 0 ? "2m" : "1s"
+  triggers        = { always_run = length([for k, v in local.server_final : 1 if v.action == "Deploy"]) > 0 ? timestamp() : 1 }
 }
 
 #_________________________________________________________________________________________

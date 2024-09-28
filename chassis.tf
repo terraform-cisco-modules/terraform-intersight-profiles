@@ -82,5 +82,6 @@ resource "intersight_chassis_profile" "deploy" {
   ] }
   name            = each.value.name
   target_platform = each.value.target_platform
+  user_label      = each.value.user_label
   organization { moid = var.orgs[each.value.org] }
 }

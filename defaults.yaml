@@ -137,6 +137,9 @@ profiles:
     description: ''
     detach_template: false
     name: '**REQUIRED**'
+    serial_numbers:
+      - unknown
+      - unknown
     ucs_domain_profile_template: ''
     user_label: ''
   name_prefix:

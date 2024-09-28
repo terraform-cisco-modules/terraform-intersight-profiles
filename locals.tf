@@ -299,8 +299,8 @@ locals {
     }) }
   }) }
   switch_profiles = { for k, v in local.switch_profiles_loop_2 : k => merge(v, {
-    policy_bucket = length(compact([v.ucs_switch_profile_template])) > 0 && length(lookup(local.domain_template, v.ucs_domain_profile_template, {})) > 0 ? merge(
-    local.domain_template[v.ucs_switch_profile_template].policy_bucket, v.policy_bucket) : v.policy_bucket
+    policy_bucket = length(compact([v.ucs_switch_profile_template])) > 0 && length(lookup(local.switch_templates, v.ucs_domain_profile_template, {})) > 0 ? merge(
+    local.switch_templates[v.ucs_switch_profile_template].policy_bucket, v.policy_bucket) : v.policy_bucket
   }) }
   domain_serial_numbers = compact(flatten([for v in local.switch_profiles : v.serial_number if length(regexall(
   "^[A-Z]{3}[1-3][\\d]([0][1-9]|[1-4][0-9]|[5][0-3])[\\dA-Z]{4}$", v.serial_number)) > 0]))
