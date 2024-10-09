@@ -35,6 +35,7 @@ policy_prefix:
   port: ''
   power: ''
   san_connectivity: ''
+  scrub: ''
   sd_card: ''
   serial_over_lan: ''
   smtp: ''
@@ -87,6 +88,7 @@ policy_suffix:
   port: ''
   power: ''
   san_connectivity: ''
+  scrub: ''
   sd_card: ''
   serial_over_lan: ''
   smtp: ''
@@ -137,9 +139,6 @@ profiles:
     description: ''
     detach_template: false
     name: '**REQUIRED**'
-    serial_numbers:
-      - unknown
-      - unknown
     ucs_domain_profile_template: ''
     user_label: ''
   name_prefix:
@@ -208,7 +207,8 @@ policy_bucket_server:
     boot_order_policy: UNUSED
     firmware_policy: UNUSED
     persistent_memory_policy: UNUSED # Standalone Only
-    power_policy: UNUSED  
+    power_policy: UNUSED
+    scrub_policy: UNUSED
     thermal_policy: UNUSED
     uuid_pool: UNUSED                # FIAttached Only
     virtual_media_policy: UNUSED

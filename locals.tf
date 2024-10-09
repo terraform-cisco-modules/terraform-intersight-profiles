@@ -171,9 +171,9 @@ locals {
     policies = [
       "adapter_configuration_policy", "bios_policy", "boot_order_policy", "certificate_management_policy",
       "device_connector_policy", "drive_security_policy", "firmware_policy", "imc_access_policy",
-      "ipmi_over_lan_policy", "lan_connectivity_policy", "ldap_policy", "local_user_policy",
-      "network_connectivity_policy", "ntp_policy", "persistent_memory_policy", "power_policy", "resource_pool",
-      "san_connectivity_policy", "sd_card_policy", "serial_over_lan_policy", "smtp_policy", "snmp_policy", "ssh_policy",
+      "ipmi_over_lan_policy", "lan_connectivity_policy", "ldap_policy", "local_user_policy", "network_connectivity_policy",
+      "ntp_policy", "persistent_memory_policy", "power_policy", "resource_pool", "san_connectivity_policy",
+      "scrub_policy", "sd_card_policy", "serial_over_lan_policy", "smtp_policy", "snmp_policy", "ssh_policy",
       "storage_policy", "syslog_policy", "thermal_policy", "uuid_pool", "virtual_kvm_policy", "virtual_media_policy",
     ]
     port_policies                = { object_type = "fabric.PortPolicy", policy = "port", }
@@ -181,6 +181,7 @@ locals {
     power_policy                 = { object_type = "power.Policy", policy = "power", }
     resource_pool                = { object_type = "resourcepool.Pool", policy = "resource", }
     san_connectivity_policy      = { object_type = "vnic.SanConnectivityPolicy", policy = "san_connectivity", }
+    scrub_policy                 = { object_type = "compute.ScrubPolicy", policy = "scrub", }
     sd_card_policy               = { object_type = "sdcard.Policy", policy = "sd_card", }
     serial_over_lan_policy       = { object_type = "sol.Policy", policy = "serial_over_lan", }
     smtp_policy                  = { object_type = "smtp.Policy", policy = "smtp", }
