@@ -55,6 +55,7 @@ resource "intersight_fabric_switch_profile" "map" {
   name = each.value.name
   # the following policy_bucket statements map different policies to this
   # template -- the object_type shows the policy type
+  switch_id = each.value.switch_id
   dynamic "policy_bucket" {
     for_each = { for k, v in each.value.policy_bucket : v.object_type => v if element(split("/", v.name), 1) != "UNUSED" }
     content {
@@ -98,7 +99,7 @@ resource "intersight_fabric_switch_profile" "deploy" {
   lifecycle {
     ignore_changes = [
       action_params, ancestors, assigned_switch, create_time, description, domain_group_moid, mod_time, owners, parent,
-      permission_resources, policy_bucket, running_workflows, shared_scope, src_template, tags, version_context
+      permission_resources, policy_bucket, running_workflows, shared_scope, src_template, switch_id, tags, version_context
     ]
   }
   name = each.value.name

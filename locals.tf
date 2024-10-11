@@ -242,7 +242,8 @@ locals {
             policy = local.bucket[e].policy
           }
         })
-        tags = lookup(v, "tags", var.global_settings.tags)
+        switch_id = x == 0 ? "A" : "B"
+        tags      = lookup(v, "tags", var.global_settings.tags)
       })
   ]]) : "${i.org}/${i.name}" => i }
   switch_templates = { for k, v in local.switch_templates_loop_1 : k => merge(v, {
@@ -289,6 +290,7 @@ locals {
         })
         serial_number = length(lookup(v, "serial_numbers", [])) == 2 ? element(v.serial_numbers, x) : length(lookup(v, "serial_numbers", [])
         ) == 1 ? element(v.serial_numbers, 0) : "unknown"
+        switch_id                   = x == 0 ? "A" : "B"
         ucs_domain_profile_template = v.ucs_domain_profile_template
         ucs_switch_profile_template = x == 0 ? "${v.ucs_domain_profile_template}-A" : "${v.ucs_domain_profile_template}-B"
       })

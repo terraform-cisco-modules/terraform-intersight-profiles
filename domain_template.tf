@@ -31,6 +31,7 @@ resource "intersight_fabric_switch_profile_template" "map" {
   name        = each.value.name
   lifecycle { ignore_changes = [action, config_context, mod_time] }
   switch_cluster_profile_template { moid = intersight_fabric_switch_cluster_profile_template.map[each.value.domain_template].moid }
+  switch_id = each.value.switch_id
   dynamic "policy_bucket" {
     for_each = { for v in each.value.policy_bucket : v.object_type => v if element(split("/", v.name), 1) != "UNUSED" }
     content {
