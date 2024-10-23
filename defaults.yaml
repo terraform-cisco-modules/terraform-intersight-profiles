@@ -28,6 +28,7 @@ policy_prefix:
   link_aggregation: ''
   link_control: ''
   local_user: ''
+  memory: ''
   multicast: ''
   network_connectivity: ''
   ntp: ''
@@ -81,6 +82,7 @@ policy_suffix:
   link_aggregation: ''
   link_control: ''
   local_user: ''
+  memory: ''
   multicast: ''
   network_connectivity: ''
   ntp: ''
@@ -206,6 +208,7 @@ policy_bucket_server:
     bios_policy: UNUSED
     boot_order_policy: UNUSED
     firmware_policy: UNUSED
+    memory_policy: UNUSED
     persistent_memory_policy: UNUSED # Standalone Only
     power_policy: UNUSED
     scrub_policy: UNUSED

@@ -165,16 +165,17 @@ locals {
     lan_connectivity_policy     = { object_type = "vnic.LanConnectivityPolicy", policy = "lan_connectivity", }
     ldap_policy                 = { object_type = "iam.LdapPolicy", policy = "ldap", }
     local_user_policy           = { object_type = "iam.EndPointUserPolicy", policy = "local_user", }
+    memory_policy               = { object_type = "memory.Policy", policy = "memory", }
     network_connectivity_policy = { object_type = "networkconfig.Policy", policy = "network_connectivity", }
     ntp_policy                  = { object_type = "ntp.Policy", policy = "ntp", }
     persistent_memory_policy    = { object_type = "memory.PersistentMemoryPolicy", policy = "persistent_memory", }
     policies = [
       "adapter_configuration_policy", "bios_policy", "boot_order_policy", "certificate_management_policy",
       "device_connector_policy", "drive_security_policy", "firmware_policy", "imc_access_policy",
-      "ipmi_over_lan_policy", "lan_connectivity_policy", "ldap_policy", "local_user_policy", "network_connectivity_policy",
-      "ntp_policy", "persistent_memory_policy", "power_policy", "resource_pool", "san_connectivity_policy",
-      "scrub_policy", "sd_card_policy", "serial_over_lan_policy", "smtp_policy", "snmp_policy", "ssh_policy",
-      "storage_policy", "syslog_policy", "thermal_policy", "uuid_pool", "virtual_kvm_policy", "virtual_media_policy",
+      "ipmi_over_lan_policy", "lan_connectivity_policy", "ldap_policy", "local_user_policy", "memory_policy",
+      "network_connectivity_policy", "ntp_policy", "persistent_memory_policy", "power_policy", "resource_pool",
+      "san_connectivity_policy", "scrub_policy", "sd_card_policy", "serial_over_lan_policy", "smtp_policy", "snmp_policy",
+      "ssh_policy", "storage_policy", "syslog_policy", "thermal_policy", "uuid_pool", "virtual_kvm_policy", "virtual_media_policy",
     ]
     port_policies                = { object_type = "fabric.PortPolicy", policy = "port", }
     port_policy                  = { object_type = "fabric.PortPolicy", policy = "port", }
