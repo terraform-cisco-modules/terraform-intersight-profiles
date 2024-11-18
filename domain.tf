@@ -99,10 +99,11 @@ resource "intersight_fabric_switch_profile" "deploy" {
   lifecycle {
     ignore_changes = [
       action_params, ancestors, assigned_switch, create_time, description, domain_group_moid, mod_time, owners, parent,
-      permission_resources, policy_bucket, running_workflows, shared_scope, src_template, switch_id, tags, version_context
+      permission_resources, policy_bucket, running_workflows, shared_scope, src_template, tags, version_context
     ]
   }
-  name = each.value.name
+  name      = each.value.name
+  switch_id = each.value.switch_id
   switch_cluster_profile { moid = intersight_fabric_switch_cluster_profile.map[each.value.domain_profile].moid }
   wait_for_completion = local.switch_profiles[element(keys(local.switch_profiles), length(keys(local.switch_profiles)) - 1)
   ].name == each.value.name ? true : false
