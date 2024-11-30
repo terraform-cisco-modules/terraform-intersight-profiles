@@ -149,10 +149,10 @@ locals {
     device_connector_policy       = { object_type = "deviceconnector.Policy", policy = "device_connector", }
     domain_dual_policies          = ["port_policies", "vlan_policies", "vsan_policies"]
     domain_duplicate_policies = [
-      "network_connectivity_policy", "ntp_policy", "snmp_policy", "syslog_policy",
+      "certificate_management_policy", "ldap_policy", "network_connectivity_policy", "ntp_policy", "snmp_policy", "syslog_policy",
     ]
     domain_policies = [
-      "network_connectivity_policy", "ntp_policy", "snmp_policy",
+      "certificate_management_policy", "ldap_policy", "network_connectivity_policy", "ntp_policy", "snmp_policy",
       "switch_control_policy", "syslog_policy", "system_qos_policy",
     ]
     drive_security_policy = { object_type = "storage.DriveSecurityPolicy", policy = "drive_security", }
