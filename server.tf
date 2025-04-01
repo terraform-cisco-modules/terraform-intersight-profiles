@@ -81,7 +81,7 @@ resource "intersight_server_profile" "map" {
     additional_properties = ""
     chassis_id            = each.value.pre_assign.chassis_id
     class_id              = "server.ServerAssignTypeSlot"
-    domain_name           = each.value.pre_assign.domain_name
+    domain_name           = each.value.pre_assign.slot_id == 0 ? "" : each.value.pre_assign.domain_name
     object_type           = "server.ServerAssignTypeSlot"
     slot_id               = each.value.pre_assign.slot_id
   }]
